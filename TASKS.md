@@ -43,23 +43,23 @@ This document outlines the tasks required to implement an echo HTTP server with 
 - [x] Ensure thread safety in path matching and lookup
 
 ## 7. Configuration Management
-- [ ] Implement API endpoints for adding/updating path configurations
-- [ ] Implement API endpoints for viewing current configurations
-- [ ] Implement API endpoints for viewing counter values
+- [x] Implement API endpoints for adding/updating path configurations
+- [x] Implement API endpoints for viewing current configurations
+- [x] Implement API endpoints for viewing counter values
 
 ## 8. Testing
-- [ ] Write unit tests for core functionality
-- [ ] Create integration tests for request/response behavior
-- [ ] Test concurrency handling
-- [ ] Test regex path matching
-- [ ] Test error frequency functionality
-- [ ] Test delayed response functionality
+- [x] Write unit tests for core functionality
+- [x] Create integration tests for request/response behavior
+- [x] Test concurrency handling
+- [x] Test regex path matching
+- [x] Test error frequency functionality
+- [x] Test delayed response functionality
 
 ## 9. Documentation
-- [ ] Create usage documentation
-- [ ] Document API endpoints
-- [ ] Create example configurations
-- [ ] Document project structure
+- [x] Create usage documentation
+- [x] Document API endpoints
+- [x] Create example configurations
+- [x] Document project structure
 
 ## 10. Final Integration and Review
 - [ ] Ensure all features are working together
