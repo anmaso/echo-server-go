@@ -300,3 +300,85 @@ func TestCustomResponseBody(t *testing.T) {
 		})
 	}
 }
+
+func TestErrorResponse(t *testing.T) {
+	tests := []struct {
+		name         string
+		pathConfig   config.PathConfig
+		path         string
+		wantStatus   int
+		wantError    bool
+		wantErrorStr string
+	}{
+		{
+			name: "error response",
+			pathConfig: config.PathConfig{
+				Pattern: "^/error$",
+				Methods: []string{"GET"},
+				ErrorResponse: &config.ResponseConfig{
+					StatusCode: http.StatusInternalServerError,
+					Body:       `{"message":"error occurred"}`,
+				},
+			},
+			path:         "/error",
+			wantStatus:   http.StatusInternalServerError,
+			wantError:    true,
+			wantErrorStr: `{"message":"error occurred"}`,
+		},
+		{
+			name: "normal response",
+			pathConfig: config.PathConfig{
+				Pattern: "^/normal$",
+				Methods: []string{"GET"},
+				Response: config.ResponseConfig{
+					StatusCode: http.StatusOK,
+					Body:       `{"message":"ok"}`,
+				},
+			},
+			path:       "/normal",
+			wantStatus: http.StatusOK,
+			wantError:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &config.ServerConfig{
+				PathMatcher: config.NewPathMatcher(),
+			}
+
+			if err := cfg.PathMatcher.Add(&tt.pathConfig); err != nil {
+				t.Fatalf("Failed to add path config: %v", err)
+			}
+
+			handler := NewEchoHandler(cfg)
+			req := httptest.NewRequest("GET", tt.path, nil)
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+			if w.Code != tt.wantStatus {
+				t.Errorf("Status code = %d, want %d", w.Code, tt.wantStatus)
+			}
+			if tt.wantError {
+				body := strings.Trim(w.Body.String(), "\n")
+				if body != tt.wantErrorStr {
+					t.Errorf("Response body = %q, want %q", body, tt.wantErrorStr)
+				}
+			}
+			/*
+
+
+				var response struct {
+					Error bool `json:"error"`
+				}
+				if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
+					t.Fatalf("Failed to decode response: %v", err)
+				}
+
+				if response.Error != tt.wantError {
+					t.Errorf("Error = %v, want %v", response.Error, tt.wantError)
+				}
+			*/
+		})
+	}
+}

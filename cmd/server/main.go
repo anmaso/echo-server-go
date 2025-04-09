@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -16,15 +19,30 @@ import (
 func main() {
 	// Initialize configuration loader
 	loader := config.NewLoader()
+	cwd, err := os.Getwd()
+	if err != nil {
+		logger.Error("Failed to get current working directory: %v", err)
+	}
+
+	configPathServer := "config/server.json"
+	if strings.Contains(cwd, "cmd/server") {
+		configPathServer, _ = url.JoinPath(cwd, "../../", configPathServer)
+	}
+	fmt.Printf("configPath: %s\n", configPathServer)
+
+	configPathRoutes := "config/paths"
+	if strings.Contains(cwd, "cmd/server") {
+		configPathRoutes, _ = url.JoinPath(cwd, "../../", configPathRoutes)
+	}
 
 	// Load server configuration
-	if err := loader.LoadServerConfig("config/server.json"); err != nil {
+	if err := loader.LoadServerConfig(configPathServer); err != nil {
 		logger.Error("Failed to load server config: %v", err)
 		os.Exit(1)
 	}
 
 	// Load path configurations
-	if err := loader.LoadPathConfigs("config/paths"); err != nil {
+	if err := loader.LoadPathConfigs(configPathRoutes); err != nil {
 		logger.Error("Failed to load path configs: %v", err)
 		os.Exit(1)
 	}

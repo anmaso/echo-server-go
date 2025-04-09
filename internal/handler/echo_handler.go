@@ -3,7 +3,6 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -59,7 +58,9 @@ func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, dat
 
 	// Determine which response config to use
 	var responseConfig config.ResponseConfig
-	if matched {
+	if matched && pathConfig.ErrorResponse != nil {
+		responseConfig = *pathConfig.ErrorResponse
+	} else if matched {
 		responseConfig = pathConfig.Response
 	} else {
 		responseConfig = h.config.DefaultResponse
@@ -111,8 +112,6 @@ func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, dat
 	if responseConfig.IncludeRequest {
 		response.Request = data
 	}
-	fmt.Printf("type of body %T\n", responseBody)
-	fmt.Printf("responseBody %v\n", responseBody)
 
 	// Set status code and write response
 	w.WriteHeader(responseConfig.StatusCode)

@@ -34,7 +34,7 @@ This document outlines the tasks required to implement an echo HTTP server with 
 - [x] Implement custom status code responses
 - [x] Implement response delay functionality
 - [x] Implement custom response body support
-- [ ] Implement error response configuration
+- [x] Implement error response configuration. Returning an error means returning the Status code as the configured value for error
 - [ ] Implement error frequency functionality
 
 ## 6. Thread Safety & Concurrency
