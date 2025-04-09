@@ -42,6 +42,7 @@ type PathMatcher interface {
 	Add(cfg *PathConfig) error
 	Match(path, method string) (*PathConfig, bool)
 	Clear()
+	GetAllConfigs() []PathConfig // New method
 }
 
 // pathMatcherImpl implements the PathMatcher interface
@@ -94,6 +95,16 @@ func (pm *pathMatcherImpl) Clear() {
 	defer pm.mu.Unlock()
 	pm.configs = make([]PathConfig, 0)
 	logger.Info("Cleared all path patterns")
+}
+
+// GetAllConfigs retrieves all path configurations
+func (pm *pathMatcherImpl) GetAllConfigs() []PathConfig {
+	pm.mu.RLock()
+	defer pm.mu.RUnlock()
+
+	configs := make([]PathConfig, len(pm.configs))
+	copy(configs, pm.configs)
+	return configs
 }
 
 // Helper function to check if a slice contains a string

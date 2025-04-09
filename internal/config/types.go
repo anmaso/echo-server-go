@@ -45,7 +45,7 @@ type ServerConfig struct {
 	ReadTimeout     Duration       `json:"readTimeout"`
 	WriteTimeout    Duration       `json:"writeTimeout"`
 	DefaultResponse ResponseConfig `json:"defaultResponse"`
-	PathMatcher     PathMatcher    `json:"-"`
+	PathMatcher     PathMatcher    `json:"pathMatcher"`
 	Paths           []PathConfig   `json:"paths"`
 }
 

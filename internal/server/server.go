@@ -16,24 +16,28 @@ type Server struct {
 	configManager *config.ConfigManager
 	server        *http.Server
 	mu            sync.RWMutex
-	handler       *handler.EchoHandler
+	handler       http.Handler
 }
 
 func New(configManager *config.ConfigManager) *Server {
 	return &Server{
 		configManager: configManager,
-		handler:       handler.NewEchoHandler(configManager.GetConfig()),
+		handler:       setupRoutes(configManager),
 	}
 }
 
-func (s *Server) setupRoutes() http.Handler {
+func setupRoutes(configManager *config.ConfigManager) http.Handler {
 	mux := http.NewServeMux()
+
+	// Configuration endpoints
+	configHandler := handler.NewConfigurationHandler(configManager)
+	mux.Handle("/config", middleware.RequestLogging(configHandler))
 
 	// Counter endpoint with logging middleware
 	mux.Handle("/counter", middleware.RequestLogging(http.HandlerFunc(handler.CounterHandler)))
 
 	// Main echo handler with logging middleware for all other paths
-	mux.Handle("/", middleware.RequestLogging(s.handler))
+	mux.Handle("/", middleware.RequestLogging(handler.NewEchoHandler(configManager.GetConfig())))
 
 	return mux
 }
@@ -42,12 +46,10 @@ func (s *Server) Start() error {
 	cfg := s.configManager.GetConfig()
 	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 
-	handler := s.setupRoutes()
-
 	s.mu.Lock()
 	s.server = &http.Server{
 		Addr:         addr,
-		Handler:      handler,
+		Handler:      s.handler,
 		ReadTimeout:  cfg.ReadTimeout.Duration,
 		WriteTimeout: cfg.WriteTimeout.Duration,
 	}
