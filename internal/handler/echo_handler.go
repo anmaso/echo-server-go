@@ -17,9 +17,6 @@ type EchoHandler struct {
 }
 
 func New(cfg *config.ServerConfig) *EchoHandler {
-	if cfg == nil {
-		cfg = config.Default()
-	}
 	return &EchoHandler{
 		config: cfg,
 	}

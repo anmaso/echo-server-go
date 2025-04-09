@@ -18,9 +18,6 @@ type Server struct {
 }
 
 func New(cfg *config.ServerConfig) *Server {
-	if cfg == nil {
-		cfg = config.Default()
-	}
 
 	return &Server{
 		config:  cfg,

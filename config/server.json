@@ -1,0 +1,12 @@
+{
+    "host": "localhost",
+    "port": 8080,
+    "readTimeout": "30s",
+    "writeTimeout": "30s",
+    "defaultResponse": {
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "application/json"
+        }
+    }
+}

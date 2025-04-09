@@ -1,0 +1,13 @@
+{
+    "pattern": "^/api/.*",
+    "methods": ["GET", "POST"],
+    "response": {
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "body": "{\"status\":\"ok\"}",
+        "delay": "2000ms"
+    },
+    "counterEnabled": true
+}

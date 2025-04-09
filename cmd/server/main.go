@@ -14,14 +14,23 @@ import (
 )
 
 func main() {
-	// Load configuration
-	cfg := config.Default()
-	if err := config.Load("config/config.json"); err == nil {
-		cfg = config.Get()
+	// Initialize configuration loader
+	loader := config.NewLoader()
+
+	// Load server configuration
+	if err := loader.LoadServerConfig("config/server.json"); err != nil {
+		logger.Error("Failed to load server config: %v", err)
+		os.Exit(1)
+	}
+
+	// Load path configurations
+	if err := loader.LoadPathConfigs("config/paths"); err != nil {
+		logger.Error("Failed to load path configs: %v", err)
+		os.Exit(1)
 	}
 
 	// Create and start server
-	srv := server.New(cfg)
+	srv := server.New(loader.GetConfig())
 
 	// Handle shutdown gracefully
 	go func() {
