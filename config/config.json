@@ -1,0 +1,27 @@
+{
+    "host": "localhost",
+    "port": 8080,
+    "readTimeout": "30s",
+    "writeTimeout": "30s",
+    "defaultResponse": {
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "application/json"
+        }
+    },
+    "paths": [
+        {
+            "pattern": "/api/.*",
+            "methods": ["GET", "POST"],
+            "response": {
+                "statusCode": 200,
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "delay": "0s"
+            },
+            "errorFrequency": 0.0,
+            "counterEnabled": true
+        }
+    ]
+}
