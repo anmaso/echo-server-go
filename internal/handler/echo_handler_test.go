@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"echo-server/internal/config"
+	"echo-server/internal/middleware"
 )
 
 func TestEchoHandler_ConfigLookup(t *testing.T) {
@@ -319,6 +320,7 @@ func TestErrorResponse(t *testing.T) {
 					StatusCode: http.StatusInternalServerError,
 					Body:       `{"message":"error occurred"}`,
 				},
+				ErrorEvery: 1,
 			},
 			path:         "/error",
 			wantStatus:   http.StatusInternalServerError,
@@ -355,7 +357,7 @@ func TestErrorResponse(t *testing.T) {
 			req := httptest.NewRequest("GET", tt.path, nil)
 			w := httptest.NewRecorder()
 
-			handler.ServeHTTP(w, req)
+			middleware.RequestLogging(handler).ServeHTTP(w, req)
 			if w.Code != tt.wantStatus {
 				t.Errorf("Status code = %d, want %d", w.Code, tt.wantStatus)
 			}
@@ -379,6 +381,61 @@ func TestErrorResponse(t *testing.T) {
 					t.Errorf("Error = %v, want %v", response.Error, tt.wantError)
 				}
 			*/
+		})
+	}
+}
+
+func TestErrorEvery(t *testing.T) {
+	pathConfig := config.PathConfig{
+		Pattern: "^/error-every$",
+		Methods: []string{"GET"},
+		Response: config.ResponseConfig{
+			StatusCode: http.StatusOK,
+			Body:       `{"status":"ok"}`,
+		},
+		ErrorResponse: &config.ResponseConfig{
+			StatusCode: http.StatusInternalServerError,
+			Body:       `{"error":"periodic error"}`,
+		},
+		ErrorEvery: 3, // Error every 3rd request
+	}
+
+	cfg := &config.ServerConfig{
+		PathMatcher: config.NewPathMatcher(),
+	}
+
+	if err := cfg.PathMatcher.Add(&pathConfig); err != nil {
+		t.Fatalf("Failed to add path config: %v", err)
+	}
+
+	handler := NewEchoHandler(cfg)
+
+	tests := []struct {
+		name      string
+		wantError bool
+	}{
+		{"first request", false},
+		{"second request", false},
+		{"third request", true}, // Should error
+		{"fourth request", false},
+		{"fifth request", false},
+		{"sixth request", true}, // Should error
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/error-every", nil)
+			w := httptest.NewRecorder()
+
+			middleware.RequestLogging(handler).ServeHTTP(w, req)
+
+			//handler.ServeHTTP(w, req)
+
+			status := w.Result().StatusCode
+
+			if tt.wantError && status != http.StatusInternalServerError {
+				t.Errorf("Error = %v, want %v", status, tt.wantError)
+			}
 		})
 	}
 }

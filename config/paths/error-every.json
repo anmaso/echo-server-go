@@ -1,0 +1,13 @@
+{
+    "pattern": "^/error-every$",
+    "methods": ["GET"],
+    "response": {
+        "statusCode": 200,
+        "body": "{\"status\":\"ok\"}"
+    },
+    "errorResponse": {
+        "statusCode": 500,
+        "body": "{\"error\":\"periodic error\"}"
+    },
+    "errorEvery": 3
+}

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"echo-server/internal/config"
+	"echo-server/internal/counter"
 	"echo-server/internal/model"
 	"echo-server/pkg/logger"
 )
@@ -52,13 +53,35 @@ func (h *EchoHandler) processResponseBody(body string, data *model.RequestData) 
 	return result, nil
 }
 
+func (h *EchoHandler) shouldReturnError(pathConfig *config.PathConfig, count uint64) bool {
+	if pathConfig == nil || pathConfig.ErrorResponse == nil {
+		return false
+	}
+
+	// Check ErrorEvery condition
+	if pathConfig.ErrorEvery > 0 && count > 0 && count%uint64(pathConfig.ErrorEvery) == 0 {
+		logger.Info("Triggering error response for path: %s (count: %d, errorEvery: %d)",
+			pathConfig.Pattern, count, pathConfig.ErrorEvery)
+		return true
+	}
+
+	return false
+}
+
 func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, data *model.RequestData) {
+	// Get counter instance
+	c := counter.GetGlobalCounter()
+
 	// Look up path configuration
 	pathConfig, matched := h.config.PathMatcher.Match(r.URL.Path, r.Method)
 
-	// Determine which response config to use
+	// Get current path count
+	pathCount := c.GetPathCount(r.URL.Path)
+
 	var responseConfig config.ResponseConfig
-	if matched && pathConfig.ErrorResponse != nil {
+	shouldError := matched && h.shouldReturnError(pathConfig, pathCount)
+
+	if shouldError {
 		responseConfig = *pathConfig.ErrorResponse
 	} else if matched {
 		responseConfig = pathConfig.Response

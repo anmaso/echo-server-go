@@ -26,7 +26,7 @@
               "body": "{\"error\":\"internal server error\"}",
               "delay": "0s"
             },
-            "errorFrequency": 0.1,
+            "errorEvery": 2,
             "counterEnabled": true
           }
     ]

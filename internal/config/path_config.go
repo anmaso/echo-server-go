@@ -13,7 +13,7 @@ type PathConfig struct {
 	Methods        []string        `json:"methods"`
 	Response       ResponseConfig  `json:"response"`
 	ErrorResponse  *ResponseConfig `json:"errorResponse,omitempty"`
-	ErrorFrequency float64         `json:"errorFrequency"`
+	ErrorEvery     int             `json:"errorEvery"`
 	CounterEnabled bool            `json:"counterEnabled"`
 	regex          *regexp.Regexp
 }
