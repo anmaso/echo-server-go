@@ -38,7 +38,7 @@ This document outlines the tasks required to implement an echo HTTP server with 
 - [x] Implement "error every" functionality. When the counter for the request is divisible by errorEvery return the error configuration
 
 ## 6. Thread Safety & Concurrency
-- [ ] Ensure thread-safe access to counters with proper mutex usage
+- [x] Ensure thread-safe access to counters with proper mutex usage
 - [ ] Handle concurrent configuration access
 - [ ] Ensure thread safety in path matching and lookup
 

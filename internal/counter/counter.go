@@ -8,9 +8,9 @@ import (
 )
 
 type Counter struct {
-	count      uint64
-	pathCounts map[string]*uint64
-	mu         sync.RWMutex
+	globalCount uint64
+	pathCounts  sync.Map
+	mu          sync.RWMutex
 }
 
 var (
@@ -18,90 +18,55 @@ var (
 	once          sync.Once
 )
 
-// GetGlobalCounter returns the singleton instance of the global counter
 func GetGlobalCounter() *Counter {
 	once.Do(func() {
-		globalCounter = &Counter{
-			pathCounts: make(map[string]*uint64),
-		}
+		globalCounter = &Counter{}
 	})
 	return globalCounter
 }
 
-// Increment atomically increments the global counter
 func (c *Counter) Increment() uint64 {
-	return atomic.AddUint64(&c.count, 1)
+	return atomic.AddUint64(&c.globalCount, 1)
 }
 
-// IncrementPath atomically increments the counter for a specific path
-func (c *Counter) IncrementPath(path string) uint64 {
-	c.mu.Lock()
-	if _, exists := c.pathCounts[path]; !exists {
-		var count uint64
-		c.pathCounts[path] = &count
-	}
-	c.mu.Unlock()
-
-	return atomic.AddUint64(c.pathCounts[path], 1)
-}
-
-// GetCount returns the current global count
 func (c *Counter) GetCount() uint64 {
-	return atomic.LoadUint64(&c.count)
+	return atomic.LoadUint64(&c.globalCount)
 }
 
-// GetPathCount returns the current count for a specific path
-func (c *Counter) GetPathCount(path string) uint64 {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+func (c *Counter) IncrementPath(path string) uint64 {
+	var count uint64
+	actual, _ := c.pathCounts.LoadOrStore(path, &count)
+	return atomic.AddUint64(actual.(*uint64), 1)
+}
 
-	if count, exists := c.pathCounts[path]; exists {
-		return atomic.LoadUint64(count)
+func (c *Counter) GetPathCount(path string) uint64 {
+	if count, ok := c.pathCounts.Load(path); ok {
+		return atomic.LoadUint64(count.(*uint64))
 	}
 	return 0
 }
 
-// GetAllPathCounts returns a map of all path counts
 func (c *Counter) GetAllPathCounts() map[string]uint64 {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	counts := make(map[string]uint64, len(c.pathCounts))
-	for path, count := range c.pathCounts {
-		counts[path] = atomic.LoadUint64(count)
-	}
+	counts := make(map[string]uint64)
+	c.pathCounts.Range(func(key, value interface{}) bool {
+		counts[key.(string)] = atomic.LoadUint64(value.(*uint64))
+		return true
+	})
 	return counts
 }
 
-// Reset atomically resets the global counter and all path counters to zero
-func (c *Counter) Reset() {
-	atomic.StoreUint64(&c.count, 0)
-
-	c.mu.Lock()
-	c.pathCounts = make(map[string]*uint64)
-	c.mu.Unlock()
-
-	logger.Info("All counters reset to 0")
-}
-
-// ResetPath resets the counter for a specific path
 func (c *Counter) ResetPath(path string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if count, exists := c.pathCounts[path]; exists {
-		atomic.StoreUint64(count, 0)
-		logger.Info("Counter reset for path: %s", path)
+	if count, ok := c.pathCounts.Load(path); ok {
+		atomic.StoreUint64(count.(*uint64), 0)
+		logger.Info("Reset counter for path: %s", path)
 	}
 }
 
-// ResetAll resets both global and path-specific counters
-func (c *Counter) ResetAll() {
-	atomic.StoreUint64(&c.count, 0)
-
-	c.mu.Lock()
-	c.pathCounts = make(map[string]*uint64)
-	c.mu.Unlock()
-
-	logger.Info("All counters reset")
+func (c *Counter) Reset() {
+	atomic.StoreUint64(&c.globalCount, 0)
+	c.pathCounts.Range(func(key, value interface{}) bool {
+		c.pathCounts.Delete(key)
+		return true
+	})
+	logger.Info("Reset all counters")
 }

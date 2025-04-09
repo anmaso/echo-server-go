@@ -39,7 +39,7 @@ func CounterHandler(w http.ResponseWriter, r *http.Request) {
 			c.ResetPath(strings.TrimSpace(path))
 			logger.Info("Reset counter for path: %s", path)
 		} else {
-			c.ResetAll()
+			c.Reset()
 			logger.Info("Reset all counters")
 		}
 		w.WriteHeader(http.StatusNoContent)
