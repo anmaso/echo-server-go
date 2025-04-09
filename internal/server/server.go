@@ -7,6 +7,7 @@ import (
 
 	"echo-server/internal/config"
 	"echo-server/internal/handler"
+	"echo-server/internal/middleware"
 	"echo-server/pkg/logger"
 )
 
@@ -30,9 +31,12 @@ func New(cfg *config.ServerConfig) *Server {
 func (s *Server) Start() error {
 	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
 
+	// Create handler chain with middleware
+	handler := middleware.RequestLogging(s.handler)
+
 	s.server = &http.Server{
 		Addr:         addr,
-		Handler:      s.handler,
+		Handler:      handler,
 		ReadTimeout:  s.config.ReadTimeout.Duration,
 		WriteTimeout: s.config.WriteTimeout.Duration,
 	}
