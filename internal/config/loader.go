@@ -50,7 +50,7 @@ func Default() *ServerConfig {
 		Port:         8080,
 		ReadTimeout:  Duration{time.Second * 30},
 		WriteTimeout: Duration{time.Second * 30},
-		DefaultResponse: Response{
+		DefaultResponse: ResponseConfig{
 			StatusCode: 200,
 			Headers:    Headers{"Content-Type": "application/json"},
 		},

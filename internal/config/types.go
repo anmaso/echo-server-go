@@ -39,21 +39,13 @@ func (d Duration) MarshalJSON() ([]byte, error) {
 
 // ServerConfig holds the main server configuration
 type ServerConfig struct {
-	Host            string       `json:"host"`
-	Port            int          `json:"port"`
-	ReadTimeout     Duration     `json:"readTimeout"`
-	WriteTimeout    Duration     `json:"writeTimeout"`
-	DefaultResponse Response     `json:"defaultResponse"`
-	Paths           []PathConfig `json:"paths"`
-}
-
-// PathConfig represents configuration for a specific path
-type PathConfig struct {
-	Pattern        string   `json:"pattern"`
-	Methods        []string `json:"methods"`
-	Response       Response `json:"response"`
-	ErrorFrequency float64  `json:"errorFrequency"`
-	CounterEnabled bool     `json:"counterEnabled"`
+	Host            string         `json:"host"`
+	Port            int            `json:"port"`
+	ReadTimeout     Duration       `json:"readTimeout"`
+	WriteTimeout    Duration       `json:"writeTimeout"`
+	DefaultResponse ResponseConfig `json:"defaultResponse"`
+	PathMatcher     *PathMatcher   `json:"-"`
+	Paths           []PathConfig   `json:"paths"`
 }
 
 // Response represents the configuration for an HTTP response

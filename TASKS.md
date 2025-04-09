@@ -22,11 +22,11 @@ This document outlines the tasks required to implement an echo HTTP server with 
 - [x] Implement per-path counter reset functionality
   - [x] fix: the /counter endpoint was not being used
   - [x] fix: the calls to /counter endpoit should also increase counters 
-  - [ ] feat: include the counter data for the path in the responses
+  - [x] feat: include the counter data for the path in the responses
 
 ## 4. Path Configuration System
-- [ ] Design configuration data structures
-- [ ] Implement configuration loading mechanism
+- [x] Design configuration data structures
+- [ ] Implement configuration loading mechanism and include tests
 - [ ] Create path matcher using regex support
 - [ ] Implement configuration lookup for incoming requests
 

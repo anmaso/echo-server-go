@@ -11,17 +11,23 @@
     },
     "paths": [
         {
-            "pattern": "/api/.*",
+            "pattern": "^/api/v1/.*",
             "methods": ["GET", "POST"],
             "response": {
-                "statusCode": 200,
-                "headers": {
-                    "Content-Type": "application/json"
-                },
-                "delay": "0s"
+              "statusCode": 200,
+              "headers": {
+                "Content-Type": "application/json"
+              },
+              "body": "{\"status\":\"success\"}",
+              "delay": "100ms"
             },
-            "errorFrequency": 0.0,
+            "errorResponse": {
+              "statusCode": 500,
+              "body": "{\"error\":\"internal server error\"}",
+              "delay": "0s"
+            },
+            "errorFrequency": 0.1,
             "counterEnabled": true
-        }
+          }
     ]
 }
