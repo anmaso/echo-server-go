@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -121,7 +122,7 @@ func TestCustomStatusCodes(t *testing.T) {
 			pathConfig: config.PathConfig{
 				Pattern:  "^/default$",
 				Methods:  []string{"GET"},
-				Response: config.ResponseConfig{},
+				Response: config.NewResponseConfig(),
 			},
 			path:       "/default",
 			method:     "GET",
@@ -221,6 +222,81 @@ func TestResponseDelay(t *testing.T) {
 				t.Errorf("Response time %v was shorter than configured delay %v",
 					duration, tt.wantMinTime)
 			}
+		})
+	}
+}
+
+func TestCustomResponseBody(t *testing.T) {
+	tests := []struct {
+		name       string
+		pathConfig config.PathConfig
+		path       string
+		body       string
+		want       string
+	}{
+		{
+			name: "static json response",
+			pathConfig: config.PathConfig{
+				Pattern: "^/json$",
+				Response: config.ResponseConfig{
+					Body: `{"message":"hello"}`,
+				},
+			},
+			path: "/json",
+			want: `{"message":"hello"}`,
+		},
+		{
+			name: "template response",
+			pathConfig: config.PathConfig{
+				Pattern: "^/template$",
+				Response: config.ResponseConfig{
+					Body: `template:{"path":"{{.Path}}{{.Method}}"}`,
+				},
+			},
+			path: "/template",
+			want: `{"path":"/templateGET"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &config.ServerConfig{
+				PathMatcher: config.NewPathMatcher(),
+			}
+
+			if err := cfg.PathMatcher.Add(&tt.pathConfig); err != nil {
+				t.Fatalf("Failed to add path config: %v", err)
+			}
+
+			handler := NewEchoHandler(cfg)
+			req := httptest.NewRequest("GET", tt.path, nil)
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+			body := strings.Trim(w.Body.String(), "\n")
+			if body != tt.want {
+				t.Errorf("Response body = %q, want %q", body, tt.want)
+			}
+			/*
+				fmt.Printf("== %v %T\n", w.Body.String(), w.Body)
+
+				var got map[string]interface{}
+				if err := json.NewDecoder(w.Body).Decode(&got); err != nil {
+					t.Fatalf("Failed to decode response: %v", err)
+				}
+
+				var want map[string]interface{}
+				if err := json.Unmarshal([]byte(tt.want), &want); err != nil {
+					t.Fatalf("Failed to parse expected response: %v", err)
+				}
+
+				responseBody := got["response"].(map[string]interface{})
+				for k, v := range want {
+					if responseBody[k] != v {
+						t.Errorf("Response[%q] = %v, want %v", k, responseBody[k], v)
+					}
+				}
+			*/
 		})
 	}
 }

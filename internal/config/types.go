@@ -48,13 +48,5 @@ type ServerConfig struct {
 	Paths           []PathConfig   `json:"paths"`
 }
 
-// Response represents the configuration for an HTTP response
-type Response struct {
-	StatusCode int      `json:"statusCode"`
-	Headers    Headers  `json:"headers"`
-	Body       string   `json:"body"`
-	Delay      Duration `json:"delay"`
-}
-
 // Headers represents HTTP headers as key-value pairs
 type Headers map[string]string

@@ -15,7 +15,7 @@ type Response struct {
 	Status      int                `json:"status"`
 }
 
-func formatResponse(data *model.RequestData, cfg *config.Response) *Response {
+func formatResponse(data *model.RequestData, cfg *config.ResponseConfig) *Response {
 	status := http.StatusOK
 	if cfg != nil && cfg.StatusCode != 0 {
 		status = cfg.StatusCode
@@ -28,7 +28,7 @@ func formatResponse(data *model.RequestData, cfg *config.Response) *Response {
 	}
 }
 
-func writeResponse(w http.ResponseWriter, resp *Response, cfg *config.Response) {
+func writeResponse(w http.ResponseWriter, resp *Response, cfg *config.ResponseConfig) {
 	// Set default headers
 	w.Header().Set("Content-Type", "application/json")
 

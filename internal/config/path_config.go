@@ -20,10 +20,21 @@ type PathConfig struct {
 
 // ResponseConfig defines the response behavior
 type ResponseConfig struct {
-	StatusCode int               `json:"statusCode"`
-	Headers    map[string]string `json:"headers"`
-	Body       string            `json:"body"`
-	Delay      Duration          `json:"delay"`
+	StatusCode     int               `json:"statusCode"`
+	Headers        map[string]string `json:"headers"`
+	Body           string            `json:"body"`
+	Delay          Duration          `json:"delay"`
+	IncludeRequest bool              `json:"includeRequest"`
+}
+
+func NewResponseConfig() ResponseConfig {
+	return ResponseConfig{
+		StatusCode:     200,
+		Headers:        make(map[string]string),
+		Body:           "",
+		Delay:          Duration{},
+		IncludeRequest: false,
+	}
 }
 
 // PathMatcher interface for path configuration matching and storage

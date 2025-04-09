@@ -1,9 +1,13 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 	"sync"
+	"text/template"
 	"time"
 
 	"echo-server/internal/config"
@@ -22,6 +26,33 @@ func NewEchoHandler(cfg *config.ServerConfig) *EchoHandler {
 	}
 }
 
+func (h *EchoHandler) processResponseBody(body string, data *model.RequestData) (interface{}, error) {
+	// If body starts with "template:", process it as a Go template
+	if strings.HasPrefix(body, "template:") {
+		logger.Debug("Processing response body as template")
+		tmpl, err := template.New("response").Parse(strings.TrimPrefix(body, "template:"))
+		if err != nil {
+			return nil, err
+		}
+
+		var buf bytes.Buffer
+		if err := tmpl.Execute(&buf, data); err != nil {
+			return nil, err
+		}
+		body = buf.String()
+	}
+
+	// Try to parse as JSON
+	var result interface{}
+	if err := json.Unmarshal([]byte(body), &result); err != nil {
+		// If not valid JSON, return as string
+		logger.Debug("Response body is not valid JSON, returning as string")
+		return body, nil
+	}
+	logger.Debug("Parsed response body as JSON: %v", result)
+	return result, nil
+}
+
 func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, data *model.RequestData) {
 	// Look up path configuration
 	pathConfig, matched := h.config.PathMatcher.Match(r.URL.Path, r.Method)
@@ -32,6 +63,9 @@ func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, dat
 		responseConfig = pathConfig.Response
 	} else {
 		responseConfig = h.config.DefaultResponse
+	}
+	if responseConfig.StatusCode == 0 {
+		responseConfig.StatusCode = http.StatusOK
 	}
 
 	// Apply configured delay if any
@@ -48,37 +82,56 @@ func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, dat
 		w.Header().Set("Content-Type", "application/json")
 	}
 
-	// Prepare response body
+	// Process response body
+	var responseBody interface{}
+	if responseConfig.Body != "" {
+		var err error
+		responseBody, err = h.processResponseBody(responseConfig.Body, data)
+		logger.Debug("Processed response body: %v", responseBody)
+		if err != nil {
+			logger.Error("Failed to process response body: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		// Default to echo request data if no body specified
+		responseBody = data
+	}
+
 	response := struct {
-		Request  *model.RequestData `json:"request"`
-		Response interface{}        `json:"response,omitempty"`
+		Request  *model.RequestData `json:"request,omitempty"`
+		Response interface{}        `json:"response"`
 		Status   int                `json:"status"`
 	}{
-		Request: data,
-		Status:  responseConfig.StatusCode,
+		Response: responseBody,
+		Status:   responseConfig.StatusCode,
 	}
 
-	// Add configured response body if specified
-	if responseConfig.Body != "" {
-		var responseBody interface{}
-		if err := json.Unmarshal([]byte(responseConfig.Body), &responseBody); err != nil {
-			response.Response = responseConfig.Body // Use as string if not valid JSON
+	// Include request data only if specified
+	if responseConfig.IncludeRequest {
+		response.Request = data
+	}
+	fmt.Printf("type of body %T\n", responseBody)
+	fmt.Printf("responseBody %v\n", responseBody)
+
+	// Set status code and write response
+	w.WriteHeader(responseConfig.StatusCode)
+	if responseBody != "" {
+		if str, ok := responseBody.(string); ok {
+			w.Write([]byte(str))
 		} else {
-			response.Response = responseBody
+			if err := json.NewEncoder(w).Encode(responseBody); err != nil {
+				logger.Error("Failed to encode response: %v", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
 		}
-	}
-
-	// Set status code from configuration
-	statusCode := responseConfig.StatusCode
-	if statusCode == 0 {
-		statusCode = http.StatusOK
-	}
-	w.WriteHeader(statusCode)
-
-	// Write response
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		logger.Error("Failed to encode response: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	} else {
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			logger.Error("Failed to encode response: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 

@@ -33,7 +33,7 @@ This document outlines the tasks required to implement an echo HTTP server with 
 ## 5. Response Customization Features
 - [x] Implement custom status code responses
 - [x] Implement response delay functionality
-- [ ] Implement custom response body support
+- [x] Implement custom response body support
 - [ ] Implement error response configuration
 - [ ] Implement error frequency functionality
 

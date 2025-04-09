@@ -1,0 +1,7 @@
+{
+    "pattern": "^/custom$",
+    "response": {
+        "body": "template:text:{{.Method}} {{.Path}}",
+        "includeRequest": true
+    }
+}

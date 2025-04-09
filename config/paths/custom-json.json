@@ -1,0 +1,7 @@
+{
+    "pattern": "^/custom-json$",
+    "response": {
+        "body": "template:{\"echo\":\"{{.Method}} {{.Path}}\"}",
+        "includeRequest": true
+    }
+}
