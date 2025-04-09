@@ -17,9 +17,12 @@ This document outlines the tasks required to implement an echo HTTP server with 
 
 ## 3. Request Counter Implementation
 - [x] Create a global request counter with mutex protection
-- [ ] Implement counter increment for each request
-- [ ] Create path-specific counters with mutex protection
-- [ ] Implement per-path counter reset functionality
+- [x] Implement counter increment for each request
+- [x] Create path-specific counters with mutex protection
+- [x] Implement per-path counter reset functionality
+  - [x] fix: the /counter endpoint was not being used
+  - [x] fix: the calls to /counter endpoit should also increase counters 
+  - [ ] feat: include the counter data for the path in the responses
 
 ## 4. Path Configuration System
 - [ ] Design configuration data structures

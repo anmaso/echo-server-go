@@ -15,6 +15,12 @@ type RequestData struct {
 	RemoteAddr  string              `json:"remoteAddr"`
 	Host        string              `json:"host"`
 	Protocol    string              `json:"protocol"`
+	Counter     CounterInfo         `json:"counter"`
+}
+
+type CounterInfo struct {
+	Global uint64 `json:"global"`
+	Path   uint64 `json:"path"`
 }
 
 func ExtractRequestData(r *http.Request) (*RequestData, error) {

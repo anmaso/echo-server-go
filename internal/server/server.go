@@ -28,11 +28,22 @@ func New(cfg *config.ServerConfig) *Server {
 	}
 }
 
+func (s *Server) setupRoutes() http.Handler {
+	mux := http.NewServeMux()
+
+	// Counter endpoint with logging middleware
+	mux.Handle("/counter", middleware.RequestLogging(http.HandlerFunc(handler.CounterHandler)))
+
+	// Main echo handler with logging middleware for all other paths
+	mux.Handle("/", middleware.RequestLogging(s.handler))
+
+	return mux
+}
+
 func (s *Server) Start() error {
 	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
 
-	// Create handler chain with middleware
-	handler := middleware.RequestLogging(s.handler)
+	handler := s.setupRoutes()
 
 	s.server = &http.Server{
 		Addr:         addr,

@@ -41,20 +41,29 @@ func RequestLogging(next http.Handler) http.Handler {
 		start := time.Now()
 		rw := newResponseWriter(w)
 
-		// Increment global counter
-		count := counter.GetGlobalCounter().Increment()
+		// Get counter instance
+		c := counter.GetGlobalCounter()
 
-		// Log request details with counter
-		logger.Info("Request #%d started: %s %s %s", count, r.RemoteAddr, r.Method, r.URL.Path)
-		logger.Debug("Request headers: %v", r.Header)
+		// Increment both global and path-specific counters
+		globalCount := c.Increment()
+		pathCount := c.IncrementPath(r.URL.Path)
+
+		// Log request details with counter information
+		logger.Info("Request #%d (path #%d) started: %s %s %s",
+			globalCount,
+			pathCount,
+			r.RemoteAddr,
+			r.Method,
+			r.URL.Path,
+		)
 
 		// Process request
 		next.ServeHTTP(rw, r)
 
-		// Log response details
+		// Log completion
 		duration := time.Since(start)
 		logger.Info("Request #%d completed: %s %s %s status=%d size=%d duration=%v",
-			count,
+			globalCount,
 			r.RemoteAddr,
 			r.Method,
 			r.URL.Path,
