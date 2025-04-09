@@ -21,7 +21,7 @@ func New(cfg *config.ServerConfig) *Server {
 
 	return &Server{
 		config:  cfg,
-		handler: handler.New(cfg),
+		handler: handler.NewEchoHandler(cfg),
 	}
 }
 

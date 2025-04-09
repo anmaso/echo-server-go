@@ -28,10 +28,10 @@ This document outlines the tasks required to implement an echo HTTP server with 
 - [x] Design configuration data structures
 - [x] Implement configuration loading mechanism and include tests
 - [x] Create path matcher using regex support
-- [ ] Implement configuration lookup for incoming requests
+- [x] Implement configuration lookup for incoming requests
 
 ## 5. Response Customization Features
-- [ ] Implement custom status code responses
+- [x] Implement custom status code responses
 - [ ] Implement response delay functionality
 - [ ] Implement custom response body support
 - [ ] Implement error response configuration
