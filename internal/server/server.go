@@ -38,6 +38,9 @@ func setupRoutes(configManager *config.ConfigManager) http.Handler {
 
 	// Main echo handler with logging middleware for all other paths
 	mux.Handle("/", middleware.RequestLogging(handler.NewEchoHandler(configManager.GetConfig())))
+	uiHandler := handler.NewUIHandler(configManager)
+	mux.Handle("/ui/", middleware.RequestLogging(uiHandler))
+	mux.Handle("/ui", http.RedirectHandler("/ui/", http.StatusPermanentRedirect))
 
 	return mux
 }

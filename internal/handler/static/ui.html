@@ -1,0 +1,54 @@
+<!-- static/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo Server UI</title>
+    <link rel="stylesheet" href="/ui/ui.css">
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <ul>
+                <li><a href="#" data-tab="configs">Path Configs</a></li>
+                <li><a href="#" data-tab="tester">Request Tester</a></li>
+                <li><a href="#" data-tab="counters">Counters</a></li>
+            </ul>
+        </nav>
+
+        <div id="configs" class="tab-content active">
+            <h2>Path Configurations</h2>
+            <button id="addConfig">Add Configuration</button>
+            <div id="configList"></div>
+        </div>
+
+        <div id="tester" class="tab-content">
+            <h2>Request Tester</h2>
+            <div class="request-form">
+                <select id="method">
+                    <option>GET</option>
+                    <option>POST</option>
+                    <option>PUT</option>
+                    <option>DELETE</option>
+                </select>
+                <input type="text" id="path" placeholder="Path (e.g. /api/test)">
+                <textarea id="requestBody" placeholder="Request Body (JSON)"></textarea>
+                <button id="sendRequest">Send Request</button>
+            </div>
+            <div class="response-area">
+                <h3>Response</h3>
+                <pre id="response"></pre>
+            </div>
+        </div>
+
+        <div id="counters" class="tab-content">
+            <h2>Request Counters</h2>
+            <button id="refreshCounters">Refresh</button>
+            <button id="resetCounters">Reset All</button>
+            <div id="counterList"></div>
+        </div>
+    </div>
+    <script src="/ui/ui.js"></script>
+</body>
+</html>
