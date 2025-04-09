@@ -159,3 +159,68 @@ func TestCustomStatusCodes(t *testing.T) {
 		})
 	}
 }
+
+func TestResponseDelay(t *testing.T) {
+	tests := []struct {
+		name        string
+		pathConfig  config.PathConfig
+		path        string
+		wantMinTime time.Duration
+	}{
+		{
+			name: "with delay",
+			pathConfig: config.PathConfig{
+				Pattern: "^/delay$",
+				Methods: []string{"GET"},
+				Response: config.ResponseConfig{
+					Delay: config.Duration{Duration: 100 * time.Millisecond},
+				},
+			},
+			path:        "/delay",
+			wantMinTime: 100 * time.Millisecond,
+		},
+		{
+			name: "no delay",
+			pathConfig: config.PathConfig{
+				Pattern: "^/nodelay$",
+				Methods: []string{"GET"},
+				Response: config.ResponseConfig{
+					Delay: config.Duration{Duration: 0},
+				},
+			},
+			path:        "/nodelay",
+			wantMinTime: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create handler with test configuration
+			cfg := &config.ServerConfig{
+				DefaultResponse: config.ResponseConfig{},
+				PathMatcher:     config.NewPathMatcher(),
+			}
+
+			if err := cfg.PathMatcher.Add(&tt.pathConfig); err != nil {
+				t.Fatalf("Failed to add path config: %v", err)
+			}
+
+			handler := NewEchoHandler(cfg)
+
+			// Create test request
+			req := httptest.NewRequest("GET", tt.path, nil)
+			w := httptest.NewRecorder()
+
+			// Measure response time
+			start := time.Now()
+			handler.ServeHTTP(w, req)
+			duration := time.Since(start)
+
+			// Check if delay was respected
+			if duration < tt.wantMinTime {
+				t.Errorf("Response time %v was shorter than configured delay %v",
+					duration, tt.wantMinTime)
+			}
+		})
+	}
+}

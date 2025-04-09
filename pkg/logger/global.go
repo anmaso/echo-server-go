@@ -1,7 +1,7 @@
 package logger
 
 var (
-	defaultLogger = New(INFO)
+	defaultLogger = New(DEBUG)
 )
 
 // Global logger functions

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"sync"
+	"time"
 
 	"echo-server/internal/config"
 	"echo-server/internal/model"
@@ -31,6 +32,12 @@ func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, dat
 		responseConfig = pathConfig.Response
 	} else {
 		responseConfig = h.config.DefaultResponse
+	}
+
+	// Apply configured delay if any
+	if responseConfig.Delay.Duration > 0 {
+		logger.Debug("Delaying response for %v", responseConfig.Delay.Duration)
+		time.Sleep(responseConfig.Delay.Duration)
 	}
 
 	// Set response headers

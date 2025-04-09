@@ -1,0 +1,8 @@
+{
+    "pattern": "^/delay$",
+    "methods": ["GET"],
+    "response": {
+        "statusCode": 200,
+        "delay": "2s"
+    }
+}
