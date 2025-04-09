@@ -11,8 +11,8 @@ This document outlines the tasks required to implement an echo HTTP server with 
 ## 2. Core Server Implementation
 - [x] Implement basic HTTP server setup
 - [x] Create handler function for incoming requests
-- [ ] Implement request data extraction (method, URL, params, headers, body)
-- [ ] Implement default response behavior (echo request data)
+- [x] Implement request data extraction (method, URL, params, headers, body)
+- [x] Implement default response behavior (echo request data)
 - [ ] Set up server-side request logging
 
 ## 3. Request Counter Implementation
