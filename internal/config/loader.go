@@ -68,7 +68,7 @@ func (l *Loader) LoadPathConfigs(dirPath string) error {
 			return nil // Continue with other files
 		}
 
-		if err := l.config.PathMatcher.AddConfig(cfg); err != nil {
+		if err := l.config.PathMatcher.Add(&cfg); err != nil {
 			logger.Error("Failed to add path config %s: %v", path, err)
 			return nil // Continue with other files
 		}

@@ -27,7 +27,7 @@ This document outlines the tasks required to implement an echo HTTP server with 
 ## 4. Path Configuration System
 - [x] Design configuration data structures
 - [x] Implement configuration loading mechanism and include tests
-- [ ] Create path matcher using regex support
+- [x] Create path matcher using regex support
 - [ ] Implement configuration lookup for incoming requests
 
 ## 5. Response Customization Features

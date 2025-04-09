@@ -78,7 +78,7 @@ func TestLoader(t *testing.T) {
 		}
 
 		cfg := loader.GetConfig()
-		match := cfg.PathMatcher.FindMatch("/test/123", "GET")
+		match, _ := cfg.PathMatcher.Match("/test/123", "GET")
 		if match == nil {
 			t.Error("Expected to find matching path config")
 		}
