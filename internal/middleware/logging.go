@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"echo-server/internal/counter"
 	"echo-server/pkg/logger"
 )
 
@@ -40,8 +41,11 @@ func RequestLogging(next http.Handler) http.Handler {
 		start := time.Now()
 		rw := newResponseWriter(w)
 
-		// Log request details
-		logger.Info("Request started: %s %s %s", r.RemoteAddr, r.Method, r.URL.Path)
+		// Increment global counter
+		count := counter.GetGlobalCounter().Increment()
+
+		// Log request details with counter
+		logger.Info("Request #%d started: %s %s %s", count, r.RemoteAddr, r.Method, r.URL.Path)
 		logger.Debug("Request headers: %v", r.Header)
 
 		// Process request
@@ -49,7 +53,8 @@ func RequestLogging(next http.Handler) http.Handler {
 
 		// Log response details
 		duration := time.Since(start)
-		logger.Info("Request completed: %s %s %s status=%d size=%d duration=%v",
+		logger.Info("Request #%d completed: %s %s %s status=%d size=%d duration=%v",
+			count,
 			r.RemoteAddr,
 			r.Method,
 			r.URL.Path,

@@ -13,10 +13,10 @@ This document outlines the tasks required to implement an echo HTTP server with 
 - [x] Create handler function for incoming requests
 - [x] Implement request data extraction (method, URL, params, headers, body)
 - [x] Implement default response behavior (echo request data)
-- [ ] Set up server-side request logging
+- [x] Set up server-side request logging
 
 ## 3. Request Counter Implementation
-- [ ] Create a global request counter with mutex protection
+- [x] Create a global request counter with mutex protection
 - [ ] Implement counter increment for each request
 - [ ] Create path-specific counters with mutex protection
 - [ ] Implement per-path counter reset functionality
