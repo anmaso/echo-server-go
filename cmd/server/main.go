@@ -47,8 +47,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	cm := config.NewConfigManager()
+	cm.UpdateConfig(loader.GetConfig())
 	// Create and start server
-	srv := server.New(loader.GetConfig())
+	srv := server.New(cm)
 
 	// Handle shutdown gracefully
 	go func() {

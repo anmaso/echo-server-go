@@ -39,8 +39,8 @@ This document outlines the tasks required to implement an echo HTTP server with 
 
 ## 6. Thread Safety & Concurrency
 - [x] Ensure thread-safe access to counters with proper mutex usage
-- [ ] Handle concurrent configuration access
-- [ ] Ensure thread safety in path matching and lookup
+- [x] Handle concurrent configuration access
+- [x] Ensure thread safety in path matching and lookup
 
 ## 7. Configuration Management
 - [ ] Implement API endpoints for adding/updating path configurations

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"echo-server/internal/config"
 	"echo-server/internal/handler"
@@ -12,16 +13,16 @@ import (
 )
 
 type Server struct {
-	server  *http.Server
-	config  *config.ServerConfig
-	handler *handler.EchoHandler
+	configManager *config.ConfigManager
+	server        *http.Server
+	mu            sync.RWMutex
+	handler       *handler.EchoHandler
 }
 
-func New(cfg *config.ServerConfig) *Server {
-
+func New(configManager *config.ConfigManager) *Server {
 	return &Server{
-		config:  cfg,
-		handler: handler.NewEchoHandler(cfg),
+		configManager: configManager,
+		handler:       handler.NewEchoHandler(configManager.GetConfig()),
 	}
 }
 
@@ -38,16 +39,19 @@ func (s *Server) setupRoutes() http.Handler {
 }
 
 func (s *Server) Start() error {
-	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
+	cfg := s.configManager.GetConfig()
+	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 
 	handler := s.setupRoutes()
 
+	s.mu.Lock()
 	s.server = &http.Server{
 		Addr:         addr,
 		Handler:      handler,
-		ReadTimeout:  s.config.ReadTimeout.Duration,
-		WriteTimeout: s.config.WriteTimeout.Duration,
+		ReadTimeout:  cfg.ReadTimeout.Duration,
+		WriteTimeout: cfg.WriteTimeout.Duration,
 	}
+	s.mu.Unlock()
 
 	logger.Info("Starting server on %s", addr)
 	return s.server.ListenAndServe()
