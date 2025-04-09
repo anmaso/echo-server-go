@@ -7,7 +7,7 @@
             "Content-Type": "application/json"
         },
         "body": "{\"status\":\"ok\"}",
-        "delay": "2000ms"
+        "delay": "1000ms"
     },
     "counterEnabled": true
 }
