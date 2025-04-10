@@ -1,4 +1,3 @@
-<!-- static/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,23 +16,41 @@
             </ul>
         </nav>
 
-        <div id="configs" class="tab-content active">
+        <div id="configs" class="tab-content">
             <h2>Path Configurations</h2>
             <button id="addConfig">Add Configuration</button>
             <div id="configList"></div>
         </div>
 
-        <div id="tester" class="tab-content">
+        <div id="tester" class="tab-content active">
             <h2>Request Tester</h2>
             <div class="request-form">
+                <label for="sampleRequests">Sample Requests:</label>
+                <select id="sampleRequests" onchange="loadSampleRequest()">
+                    <option value="">Select a sample request...</option>
+                    <option value="configGet">Get All Configurations</option>
+                    <option value="configPostSimple">Add Simple Configuration</option>
+                    <option value="configPostDelay">Add Configuration with Delay</option>
+                    <option value="configPostTemplate">Add Configuration with Template</option>
+                    <option value="configPostError">Add Configuration with Error Response</option>
+                    <option value="regularGet">Simple GET Request</option>
+                    <option value="regularPost">Simple POST Request</option>
+                </select>
+
+                <label for="method">Method:</label>
                 <select id="method">
                     <option>GET</option>
                     <option>POST</option>
                     <option>PUT</option>
                     <option>DELETE</option>
                 </select>
+
+                <label for="path">Path:</label>
                 <input type="text" id="path" placeholder="Path (e.g. /api/test)">
+
+                <label for="requestBody">Request Body:</label>
                 <textarea id="requestBody" placeholder="Request Body (JSON)"></textarea>
+                
                 <button id="sendRequest">Send Request</button>
             </div>
             <div class="response-area">
@@ -49,6 +66,94 @@
             <div id="counterList"></div>
         </div>
     </div>
+
+    <script>
+        const sampleRequests = {
+            configGet: {
+                method: 'GET',
+                path: '/config/paths',
+                body: ''
+            },
+            configPostSimple: {
+                method: 'POST',
+                path: '/config/paths',
+                body: JSON.stringify({
+                    pattern: "^/api/simple$",
+                    methods: ["GET"],
+                    response: {
+                        statusCode: 200,
+                        body: '{"message": "simple response"}'
+                    }
+                }, null, 2)
+            },
+            configPostDelay: {
+                method: 'POST',
+                path: '/config/paths',
+                body: JSON.stringify({
+                    pattern: "^/api/delayed$",
+                    methods: ["GET"],
+                    response: {
+                        statusCode: 200,
+                        body: '{"message": "delayed response"}',
+                        delay: "2s"
+                    }
+                }, null, 2)
+            },
+            configPostTemplate: {
+                method: 'POST',
+                path: '/config/paths',
+                body: JSON.stringify({
+                    pattern: "^/api/template/.*$",
+                    methods: ["GET", "POST"],
+                    response: {
+                        statusCode: 200,
+                        body: 'template:{"path":"{{.Path}}","method":"{{.Method}}","headers":{{.Headers}}}',
+                        includeRequest: true
+                    }
+                }, null, 2)
+            },
+            configPostError: {
+                method: 'POST',
+                path: '/config/paths',
+                body: JSON.stringify({
+                    pattern: "^/api/error$",
+                    methods: ["GET"],
+                    response: {
+                        statusCode: 200,
+                        body: '{"status":"ok"}'
+                    },
+                    errorResponse: {
+                        statusCode: 500,
+                        body: '{"error":"simulated error"}'
+                    },
+                    errorFrequency: 0.5
+                }, null, 2)
+            },
+            regularGet: {
+                method: 'GET',
+                path: '/api/simple',
+                body: ''
+            },
+            regularPost: {
+                method: 'POST',
+                path: '/api/template/test',
+                body: JSON.stringify({
+                    message: "Hello, world!",
+                    timestamp: new Date().toISOString()
+                }, null, 2)
+            }
+        };
+
+        function loadSampleRequest() {
+            const select = document.getElementById('sampleRequests');
+            const sample = sampleRequests[select.value];
+            if (sample) {
+                document.getElementById('method').value = sample.method;
+                document.getElementById('path').value = sample.path;
+                document.getElementById('requestBody').value = sample.body;
+            }
+        }
+    </script>
     <script src="/ui/ui.js"></script>
 </body>
 </html>

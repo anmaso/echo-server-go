@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load configurations
     function loadConfigs() {
-        fetch('/config/paths')
+        fetch('/config')
             .then(response => response.json())
             .then(data => {
                 const configList = document.getElementById('configList');
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     div.className = 'config-item';
                     div.innerHTML = `
                         <h3>${config.pattern}</h3>
-                        <p>Methods: ${config.methods.join(', ')}</p>
+                        <p>Methods: ${[].concat(config.methods).join(', ')}</p>
                         <pre>${JSON.stringify(config, null, 2)}</pre>
                         <button onclick="deleteConfig('${config.pattern}')">Delete</button>
                     `;
