@@ -7,6 +7,16 @@ import (
 	"echo-server/pkg/logger"
 )
 
+// ProxyConfig defines upstream proxy configuration for a path
+type ProxyConfig struct {
+	URL            string   `json:"url"`
+	Timeout        Duration `json:"timeout,omitempty"`
+	StripPrefix    bool     `json:"stripPrefix,omitempty"`
+	PreserveHost   bool     `json:"preserveHost,omitempty"`
+	AllowedHeaders []string `json:"allowedHeaders,omitempty"`
+	ForwardHeaders []string `json:"forwardHeaders,omitempty"`
+}
+
 // PathConfig represents configuration for a specific path pattern
 type PathConfig struct {
 	Name           string          `json:"name"`
@@ -17,6 +27,7 @@ type PathConfig struct {
 	ErrorEvery     int             `json:"errorEvery"`
 	CounterEnabled bool            `json:"counterEnabled"`
 	regex          *regexp.Regexp
+	Proxy          *ProxyConfig `json:"proxy,omitempty"` // Add this field
 }
 
 // ResponseConfig defines the response behavior

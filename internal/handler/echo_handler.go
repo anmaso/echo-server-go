@@ -3,6 +3,8 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -74,11 +76,50 @@ func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, dat
 
 	// Look up path configuration
 	pathConfig, matched := h.config.PathMatcher.Match(r.URL.Path, r.Method)
+	var responseConfig config.ResponseConfig
+
+	if pathConfig.Proxy != nil {
+		// create an http requet to forward to the proxy
+		proxyReq, err := http.NewRequest(r.Method, pathConfig.Proxy.URL, r.Body)
+		if err != nil {
+			logger.Error("Failed to create proxy request: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		proxyReq.Header.Set("X-Forwarded-For", r.RemoteAddr)
+		proxyReq.Header.Set("X-Forwarded-Proto", r.URL.Scheme)
+		proxyReq.Header.Set("X-Forwarded-Host", r.Host)
+		proxyReq.Header.Set("X-Forwarded-Method", r.Method)
+
+		client := &http.Client{}
+		proxyResp, err := client.Do(proxyReq)
+		if err != nil {
+			logger.Error("Failed to forward request to proxy: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		defer proxyResp.Body.Close()
+
+		/*
+			for key, value := range proxyResp.Header {
+				w.Header()[key] = value
+			}
+			w.WriteHeader(proxyResp.StatusCode)
+		*/
+		body, err := io.ReadAll(proxyResp.Body)
+		fmt.Println("%v", body)
+		if err != nil {
+			logger.Error("Failed to read proxy response body: %v", err)
+		} else {
+			data.Body = string(body)
+			logger.Debug("Received proxy response: %s", data.Body)
+
+		}
+	}
 
 	// Get current path count
 	pathCount := c.GetPathCount(r.URL.Path)
 
-	var responseConfig config.ResponseConfig
 	shouldError := matched && h.shouldReturnError(pathConfig, pathCount)
 
 	if shouldError {

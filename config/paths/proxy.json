@@ -1,0 +1,13 @@
+{
+    "name": "proxy-example",
+    "pattern": "^/proxy",
+    "methods": ["GET", "POST"],
+    "proxy": {
+        "url": "https://www.google.com/",
+        "timeout": "30s",
+        "stripPrefix": true,
+        "preserveHost": false,
+        "allowedHeaders": ["Authorization", "Content-Type"],
+        "forwardHeaders": ["X-Request-ID"]
+    }
+}
