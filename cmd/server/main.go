@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -18,6 +19,11 @@ import (
 
 func main() {
 	cfg := getConfig()
+
+	if cfg == nil {
+		fmt.Println(helpText)
+		os.Exit(0)
+	}
 
 	cm := config.NewConfigManager()
 	cm.UpdateConfig(cfg)
@@ -58,8 +64,13 @@ func getConfig() *config.ServerConfig {
 	configPath := flag.String("config", "config/server.json", "Path to server configuration file")
 	pathsDir := flag.String("paths-dir", "config/paths", "Path to directory containing path configurations")
 	logLevel := flag.String("log-level", "info", "Logging level (debug, info, warn, error)")
+	help := flag.Bool("help", false, "Show help message")
 
 	flag.Parse()
+
+	if *help {
+		return nil
+	}
 
 	// Set log level
 	switch strings.ToLower(*logLevel) {
@@ -119,3 +130,40 @@ func getConfig() *config.ServerConfig {
 	}
 	return cfg
 }
+
+const helpText = `Echo Server - A configurable HTTP mock server
+
+Usage:
+  echo-server [options]
+
+Options:
+  -port int
+        Port to run the server on (default 8080)
+  -config string
+        Path to configuration directory (default "./config")
+  -help
+        Show this help message
+
+Examples:
+  # Start server on default port 8080
+  echo-server
+
+  # Start server on custom port
+  echo-server -port 3000
+
+  # Use custom config directory
+  echo-server -config /path/to/configs
+
+  # Show help
+  echo-server -help
+
+Features:
+  - Configure custom endpoint behaviors
+  - Response templating
+  - Request delay simulation
+  - Error injection
+  - Request counters
+  - Path pattern matching
+  - Multiple HTTP methods support
+
+For more information, visit: https://github.com/anmaso/echo-server-go`
