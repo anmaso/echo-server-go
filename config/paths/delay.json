@@ -1,6 +1,6 @@
 {
     "name":"delay",
-    "pattern": "^/delay$",
+    "pattern": "^/delay.*$",
     "methods": ["GET"],
     "response": {
         "statusCode": 200,

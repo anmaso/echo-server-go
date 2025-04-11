@@ -115,6 +115,37 @@ pre {
     border-left: 4px solid var(--secondary-color);
 }
 
+.config-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+.filter-input {
+    max-width: 300px;
+}
+
+.config-item {
+    cursor: pointer;
+}
+
+.config-item.collapsed .config-content {
+    display: none;
+}
+
+.config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+}
+
+.config-content {
+    padding: 10px;
+    border-top: 1px solid #eee;
+}
+
 .help-section {
     margin: 20px 0;
     padding: 20px;
