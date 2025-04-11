@@ -13,6 +13,7 @@
                 <li><a href="#" data-tab="configs">Path Configs</a></li>
                 <li><a href="#" data-tab="tester">Request Tester</a></li>
                 <li><a href="#" data-tab="counters">Counters</a></li>
+                <li><a href="#" data-tab="help">Help</a></li>
             </ul>
         </nav>
 
@@ -64,6 +65,86 @@
             <button id="refreshCounters">Refresh</button>
             <button id="resetCounters">Reset All</button>
             <div id="counterList"></div>
+        </div>
+        <div id="help" class="tab-content">
+            <h2>Echo Server Help</h2>
+            
+            <section class="help-section">
+                <h3>Path Configurations</h3>
+                <p>Configure custom endpoint behaviors with the following options:</p>
+                <ul>
+                    <li><strong>Name:</strong> Unique identifier for the configuration (required)</li>
+                    <li><strong>Pattern:</strong> Regex pattern to match incoming request paths</li>
+                    <li><strong>Methods:</strong> HTTP methods to handle (GET, POST, PUT, DELETE)</li>
+                    <li><strong>Response:</strong> Configure the response behavior:
+                        <ul>
+                            <li>Status code</li>
+                            <li>Response body</li>
+                            <li>Optional delay</li>
+                            <li>Template support using Go template syntax</li>
+                        </ul>
+                    </li>
+                    <li><strong>Error Responses:</strong> Configure error scenarios with probability</li>
+                </ul>
+            </section>
+
+            <section class="help-section">
+                <h3>Request Tester</h3>
+                <p>Test your configured endpoints or any path:</p>
+                <ul>
+                    <li><strong>Sample Requests:</strong> Pre-configured examples for common scenarios</li>
+                    <li><strong>Custom Requests:</strong> Send requests with custom method, path, and body</li>
+                    <li><strong>Response View:</strong> See the full server response including headers</li>
+                </ul>
+            </section>
+
+            <section class="help-section">
+                <h3>Request Counters</h3>
+                <p>Monitor server usage:</p>
+                <ul>
+                    <li>View request counts per path</li>
+                    <li>Reset counters</li>
+                    <li>Real-time updates</li>
+                </ul>
+            </section>
+
+            <section class="help-section">
+                <h3>Sample Configuration Examples</h3>
+                <h4>Simple Endpoint</h4>
+                <pre>{
+    "name": "simple-endpoint",
+    "pattern": "^/api/simple$",
+    "methods": ["GET"],
+    "response": {
+        "statusCode": 200,
+        "body": "{\"message\": \"simple response\"}"
+    }
+}</pre>
+
+                <h4>Template Response</h4>
+                <pre>{
+    "name": "template-endpoint",
+    "pattern": "^/api/template/.*$",
+    "methods": ["GET", "POST"],
+    "response": {
+        "statusCode": 200,
+        "body": "template:{\"path\":\"{{.Path}}\",\"method\":\"{{.Method}}\"}",
+        "includeRequest": true
+    }
+}</pre>
+
+                <h4>Delayed Response</h4>
+                <pre>{
+    "name": "delayed-endpoint",
+    "pattern": "^/api/delayed$",
+    "methods": ["GET"],
+    "response": {
+        "statusCode": 200,
+        "body": "{\"message\": \"delayed response\"}",
+        "delay": "2s"
+    }
+}</pre>
+            </section>
         </div>
     </div>
 

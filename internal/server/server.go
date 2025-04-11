@@ -28,24 +28,6 @@ func New(configManager *config.ConfigManager) *Server {
 	}
 }
 
-func setupRoutesMux(configManager *config.ConfigManager) http.Handler {
-	mux := http.NewServeMux()
-
-	// Configuration endpoints
-	configHandler := handler.NewConfigurationHandler(configManager)
-	mux.Handle("/config", middleware.RequestLogging(configHandler))
-
-	// Counter endpoint with logging middleware
-	mux.Handle("/counter", middleware.RequestLogging(http.HandlerFunc(handler.CounterHandler)))
-
-	// Main echo handler with logging middleware for all other paths
-	uiHandler := handler.NewUIHandler(configManager)
-	mux.Handle("/ui/", middleware.RequestLogging(uiHandler))
-	mux.Handle("/ui", http.RedirectHandler("/ui/", http.StatusPermanentRedirect))
-	mux.Handle("/", middleware.RequestLogging(handler.NewEchoHandler(configManager.GetConfig())))
-
-	return mux
-}
 func setupRoutes(configManager *config.ConfigManager) http.Handler {
 	routes := mux.NewRouter()
 

@@ -58,6 +58,7 @@ Create path configurations in `config/paths/`:
 
 ```json
 {
+    "name": "api",
     "pattern": "^/api/.*",
     "methods": ["GET", "POST"],
     "response": {
