@@ -30,6 +30,10 @@ func (l *Loader) LoadServerConfig(filepath string) error {
 
 	data, err := os.ReadFile(filepath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			logger.Warn("Server config file does not exist: %s", filepath)
+			return nil
+		}
 		return fmt.Errorf("reading server config: %w", err)
 	}
 
@@ -49,6 +53,10 @@ func (l *Loader) LoadPathConfigs(dirPath string) error {
 
 	return filepath.WalkDir(dirPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
+			if os.IsNotExist(err) {
+				logger.Warn("Path config directory does not exist: %s", dirPath)
+				return nil
+			}
 			return err
 		}
 

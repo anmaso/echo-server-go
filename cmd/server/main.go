@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"flag"
 	"net/http"
 	"net/url"
 	"os"
@@ -17,38 +17,11 @@ import (
 )
 
 func main() {
-	// Initialize configuration loader
-	loader := config.NewLoader()
-	cwd, err := os.Getwd()
-	if err != nil {
-		logger.Error("Failed to get current working directory: %v", err)
-	}
-
-	configPathServer := "config/server.json"
-	if strings.Contains(cwd, "cmd/server") {
-		configPathServer, _ = url.JoinPath(cwd, "../../", configPathServer)
-	}
-	fmt.Printf("configPath: %s\n", configPathServer)
-
-	configPathRoutes := "config/paths"
-	if strings.Contains(cwd, "cmd/server") {
-		configPathRoutes, _ = url.JoinPath(cwd, "../../", configPathRoutes)
-	}
-
-	// Load server configuration
-	if err := loader.LoadServerConfig(configPathServer); err != nil {
-		logger.Error("Failed to load server config: %v", err)
-		os.Exit(1)
-	}
-
-	// Load path configurations
-	if err := loader.LoadPathConfigs(configPathRoutes); err != nil {
-		logger.Error("Failed to load path configs: %v", err)
-		os.Exit(1)
-	}
+	cfg := getConfig()
 
 	cm := config.NewConfigManager()
-	cm.UpdateConfig(loader.GetConfig())
+	cm.UpdateConfig(cfg)
+
 	// Create and start server
 	srv := server.New(cm)
 
@@ -74,4 +47,75 @@ func main() {
 	}
 
 	logger.Info("Server exiting")
+}
+
+func getConfig() *config.ServerConfig {
+	// Define command-line flags
+	host := flag.String("host", "0.0.0.0", "Server host (overrides config file)")
+	port := flag.Int("port", 8080, "Server port (overrides config file)")
+	readTimeout := flag.Duration("read-timeout", 0, "Read timeout duration (overrides config file)")
+	writeTimeout := flag.Duration("write-timeout", 0, "Write timeout duration (overrides config file)")
+	configPath := flag.String("config", "config/server.json", "Path to server configuration file")
+	pathsDir := flag.String("paths-dir", "config/paths", "Path to directory containing path configurations")
+	logLevel := flag.String("log-level", "info", "Logging level (debug, info, warn, error)")
+
+	flag.Parse()
+
+	// Set log level
+	switch strings.ToLower(*logLevel) {
+	case "debug":
+		logger.SetLevel(logger.DEBUG)
+	case "info":
+		logger.SetLevel(logger.INFO)
+	case "warn":
+		logger.SetLevel(logger.WARN)
+	case "error":
+		logger.SetLevel(logger.ERROR)
+	}
+
+	// Initialize configuration loader
+	loader := config.NewLoader()
+	cwd, err := os.Getwd()
+	if err != nil {
+		logger.Error("Failed to get current working directory: %v", err)
+	}
+
+	// Resolve config paths
+	configPathServer := *configPath
+	if strings.Contains(cwd, "cmd/server") {
+		configPathServer, _ = url.JoinPath(cwd, "../../", configPathServer)
+	}
+
+	configPathRoutes := *pathsDir
+	if strings.Contains(cwd, "cmd/server") {
+		configPathRoutes, _ = url.JoinPath(cwd, "../../", configPathRoutes)
+	}
+
+	// Load server configuration
+	if err := loader.LoadServerConfig(configPathServer); err != nil {
+		logger.Error("Failed to load server config: %v", err)
+		os.Exit(1)
+	}
+
+	// Override configuration with command-line flags
+	cfg := loader.GetConfig()
+	if *host != "" {
+		cfg.Host = *host
+	}
+	if *port != 0 {
+		cfg.Port = *port
+	}
+	if *readTimeout != 0 {
+		cfg.ReadTimeout.Duration = *readTimeout
+	}
+	if *writeTimeout != 0 {
+		cfg.WriteTimeout.Duration = *writeTimeout
+	}
+
+	// Load path configurations
+	if err := loader.LoadPathConfigs(configPathRoutes); err != nil {
+		logger.Error("Failed to load path configs: %v", err)
+		os.Exit(1)
+	}
+	return cfg
 }
