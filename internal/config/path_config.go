@@ -9,6 +9,7 @@ import (
 
 // PathConfig represents configuration for a specific path pattern
 type PathConfig struct {
+	Name           string          `json:"name"`
 	Pattern        string          `json:"pattern"`
 	Methods        []string        `json:"methods"`
 	Response       ResponseConfig  `json:"response"`
@@ -43,6 +44,7 @@ type PathMatcher interface {
 	Match(path, method string) (*PathConfig, bool)
 	Clear()
 	GetAllConfigs() []PathConfig // New method
+	DeleteByName(name string) bool
 }
 
 // pathMatcherImpl implements the PathMatcher interface
@@ -87,6 +89,21 @@ func (pm *pathMatcherImpl) Match(path, method string) (*PathConfig, bool) {
 		}
 	}
 	return nil, false
+}
+
+func (pm *pathMatcherImpl) DeleteByName(name string) bool {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+
+	for i, cfg := range pm.configs {
+		if cfg.Name == name {
+			pm.configs = append(pm.configs[:i], pm.configs[i+1:]...)
+			logger.Info("Deleted path pattern: %s", cfg.Pattern)
+			return true
+		}
+	}
+	logger.Warn("No path pattern found with name: %s", name)
+	return false
 }
 
 // Clear removes all path configurations

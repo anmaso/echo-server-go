@@ -1,4 +1,5 @@
 {
+    "name": "custom-text",
     "pattern": "^/custom$",
     "response": {
         "body": "template:text:{{.Method}} {{.Path}}",

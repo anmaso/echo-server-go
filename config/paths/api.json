@@ -1,4 +1,5 @@
 {
+    "name":"api",
     "pattern": "^/api/.*",
     "methods": ["GET", "POST"],
     "response": {

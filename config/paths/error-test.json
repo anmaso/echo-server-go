@@ -1,4 +1,5 @@
 {
+    "name": "error-test",
     "pattern": "^/test-error$",
     "methods": ["GET"],
     "response": {

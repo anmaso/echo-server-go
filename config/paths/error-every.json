@@ -1,4 +1,5 @@
 {
+    "name": "error-every",
     "pattern": "^/error-every$",
     "methods": ["GET"],
     "response": {

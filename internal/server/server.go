@@ -10,6 +10,8 @@ import (
 	"echo-server/internal/handler"
 	"echo-server/internal/middleware"
 	"echo-server/pkg/logger"
+
+	"github.com/gorilla/mux"
 )
 
 type Server struct {
@@ -26,7 +28,7 @@ func New(configManager *config.ConfigManager) *Server {
 	}
 }
 
-func setupRoutes(configManager *config.ConfigManager) http.Handler {
+func setupRoutesMux(configManager *config.ConfigManager) http.Handler {
 	mux := http.NewServeMux()
 
 	// Configuration endpoints
@@ -37,12 +39,31 @@ func setupRoutes(configManager *config.ConfigManager) http.Handler {
 	mux.Handle("/counter", middleware.RequestLogging(http.HandlerFunc(handler.CounterHandler)))
 
 	// Main echo handler with logging middleware for all other paths
-	mux.Handle("/", middleware.RequestLogging(handler.NewEchoHandler(configManager.GetConfig())))
 	uiHandler := handler.NewUIHandler(configManager)
 	mux.Handle("/ui/", middleware.RequestLogging(uiHandler))
 	mux.Handle("/ui", http.RedirectHandler("/ui/", http.StatusPermanentRedirect))
+	mux.Handle("/", middleware.RequestLogging(handler.NewEchoHandler(configManager.GetConfig())))
 
 	return mux
+}
+func setupRoutes(configManager *config.ConfigManager) http.Handler {
+	routes := mux.NewRouter()
+
+	// Configuration endpoints
+	configHandler := handler.NewConfigurationHandler(configManager)
+	routes.PathPrefix("/config").Handler(middleware.RequestLogging(configHandler))
+
+	// Counter endpoint with logging middleware
+	routes.Handle("/counter", middleware.RequestLogging(http.HandlerFunc(handler.CounterHandler)))
+
+	// Main echo handler with logging middleware for all other paths
+	uiHandler := handler.NewUIHandler(configManager)
+	routes.Handle("/ui/", middleware.RequestLogging(uiHandler))
+	routes.PathPrefix("/ui/").Handler(middleware.RequestLogging(uiHandler))
+	routes.Handle("/ui", http.RedirectHandler("/ui/", http.StatusPermanentRedirect))
+	routes.PathPrefix("/").Handler(middleware.RequestLogging(handler.NewEchoHandler(configManager.GetConfig())))
+
+	return routes
 }
 
 func (s *Server) Start() error {

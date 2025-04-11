@@ -1,4 +1,5 @@
 {
+    "name":"delay",
     "pattern": "^/delay$",
     "methods": ["GET"],
     "response": {

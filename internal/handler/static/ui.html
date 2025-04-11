@@ -46,7 +46,7 @@
                 </select>
 
                 <label for="path">Path:</label>
-                <input type="text" id="path" placeholder="Path (e.g. /api/test)">
+                <input type="text" id="path" value="/" placeholder="Path (e.g. /api/test)">
 
                 <label for="requestBody">Request Body:</label>
                 <textarea id="requestBody" placeholder="Request Body (JSON)"></textarea>
@@ -78,6 +78,7 @@
                 method: 'POST',
                 path: '/config/paths',
                 body: JSON.stringify({
+                    name: "simple-endpoint",
                     pattern: "^/api/simple$",
                     methods: ["GET"],
                     response: {
@@ -90,6 +91,7 @@
                 method: 'POST',
                 path: '/config/paths',
                 body: JSON.stringify({
+                    name: "delayed-endpoint",
                     pattern: "^/api/delayed$",
                     methods: ["GET"],
                     response: {

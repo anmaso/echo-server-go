@@ -1,4 +1,5 @@
 {
+    "name":"custom-json",
     "pattern": "^/custom-json$",
     "response": {
         "body": "template:{\"echo\":\"{{.Method}} {{.Path}}\"}",

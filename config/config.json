@@ -11,6 +11,7 @@
     },
     "paths": [
         {
+            "name":"api",
             "pattern": "^/api/v1/.*",
             "methods": ["GET", "POST"],
             "response": {
