@@ -78,7 +78,7 @@ func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, dat
 	pathConfig, matched := h.config.PathMatcher.Match(r.URL.Path, r.Method)
 	var responseConfig config.ResponseConfig
 
-	if pathConfig.Proxy != nil {
+	if matched && pathConfig.Proxy != nil {
 		// create an http requet to forward to the proxy
 		proxyReq, err := http.NewRequest(r.Method, pathConfig.Proxy.URL, r.Body)
 		if err != nil {
