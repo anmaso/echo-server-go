@@ -12,6 +12,26 @@ A configurable HTTP echo server with advanced features for testing and mocking H
 - Error injection capabilities
 - Thread-safe operations
 - REST API for configuration management
+- Proxy support for upstream servers
+- Web UI for configuration and testing
+
+## Screenshots
+
+### Path Configurations
+![Main Path Configurations](docs/images/main.png)
+Configure and manage endpoint behaviors with regex pattern matching, methods, and responses.
+
+### Request Tester
+![Request Tester](docs/images/request.png)
+Test endpoints with custom methods, paths, and request bodies.
+
+### Request Counters
+![Request Counters](docs/images/counter.png)
+Monitor request counts per endpoint and manage counters.
+
+### Help Documentation
+![Help Documentation](docs/images/help.png)
+Built-in documentation and configuration examples.
 
 ## Installation
 
@@ -26,7 +46,12 @@ go get github.com/yourusername/echo-server
 go run cmd/server/main.go
 ```
 
-2. Make a test request:
+2. Access the web UI:
+```
+http://localhost:8080
+```
+
+3. Make a test request:
 ```bash
 curl http://localhost:8080/test
 ```
@@ -78,6 +103,26 @@ Create path configurations in `config/paths/`:
 }
 ```
 
+### Proxy Configuration
+
+Configure proxy settings for specific paths:
+
+```json
+{
+    "name": "proxy-endpoint",
+    "pattern": "^/proxy/.*",
+    "methods": ["GET", "POST", "PUT", "DELETE"],
+    "proxy": {
+        "url": "http://upstream-api.example.com",
+        "timeout": "30s",
+        "stripPrefix": true,
+        "preserveHost": false,
+        "allowedHeaders": ["Authorization", "Content-Type"],
+        "forwardHeaders": ["X-Request-ID"]
+    }
+}
+```
+
 ## API Endpoints
 
 ### Configuration Management
@@ -126,6 +171,25 @@ Enable request counting per path:
 {
     "counterEnabled": true
 }
+```
+
+## Command Line Options
+
+```
+Usage:
+  echo-server [options]
+
+Options:
+  -port int
+        Port to run the server on (default 8080)
+  -config string
+        Path to configuration directory (default "./config")
+  -upstream string
+        Upstream server URL to proxy requests to
+  -proxy-timeout duration
+        Timeout for proxy requests (default 30s)
+  -help
+        Show this help message
 ```
 
 ## Project Structure
