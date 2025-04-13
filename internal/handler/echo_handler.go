@@ -28,31 +28,24 @@ func NewEchoHandler(cfg *config.ServerConfig) *EchoHandler {
 	}
 }
 
-func (h *EchoHandler) processResponseBody(body string, data *model.RequestData) (interface{}, error) {
+func (h *EchoHandler) processResponseBody(body string, data *model.RequestData) (string, error) {
 	// If body starts with "template:", process it as a Go template
 	if strings.HasPrefix(body, "template:") {
 		logger.Debug("Processing response body as template")
 		tmpl, err := template.New("response").Parse(strings.TrimPrefix(body, "template:"))
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 
 		var buf bytes.Buffer
 		if err := tmpl.Execute(&buf, data); err != nil {
-			return nil, err
+			return "", err
 		}
 		body = buf.String()
 	}
 
 	// Try to parse as JSON
-	var result interface{}
-	if err := json.Unmarshal([]byte(body), &result); err != nil {
-		// If not valid JSON, return as string
-		logger.Debug("Response body is not valid JSON, returning as string")
-		return body, nil
-	}
-	logger.Debug("Parsed response body as JSON: %v", result)
-	return result, nil
+	return body, nil
 }
 
 func (h *EchoHandler) shouldReturnError(pathConfig *config.PathConfig, count uint64) bool {
@@ -148,7 +141,7 @@ func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, dat
 	}
 
 	// Process response body
-	var responseBody interface{}
+	var responseBody string
 	if responseConfig.Body != "" {
 		var err error
 		responseBody, err = h.processResponseBody(responseConfig.Body, data)
@@ -158,30 +151,37 @@ func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, dat
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-	} else {
-		// Default to echo request data if no body specified
-		responseBody = data
 	}
 
-	response := struct {
-		Request  *model.RequestData `json:"request,omitempty"`
-		Response interface{}        `json:"response"`
-		Status   int                `json:"status"`
-	}{
-		Response: responseBody,
-		Status:   responseConfig.StatusCode,
-	}
+	/*
+		response := struct {
+			Request  *model.RequestData `json:"request,omitempty"`
+			Response interface{}        `json:"response"`
+			Status   int                `json:"status"`
+		}{
+			Response: responseBody,
+			Status:   responseConfig.StatusCode,
+		}
 
-	// Include request data only if specified
-	if responseConfig.IncludeRequest {
-		response.Request = data
+		// Include request data only if specified
+		if responseConfig.IncludeRequest {
+			response.Request = data
+		}
+	*/
+
+	response := &model.ResponseData{
+		StatusCode: responseConfig.StatusCode,
+		Headers:    responseConfig.Headers,
+		Body:       responseBody,
+		Request:    data,
+		Counter:    model.CounterInfo{Global: c.GetCount(), Path: c.GetPathCount(r.URL.Path)},
 	}
 
 	// Set status code and write response
 	w.WriteHeader(responseConfig.StatusCode)
 	if responseBody != "" {
-		if str, ok := responseBody.(string); ok {
-			w.Write([]byte(str))
+		if !responseConfig.IncludeRequest {
+			w.Write([]byte(responseBody))
 		} else {
 			if err := json.NewEncoder(w).Encode(responseBody); err != nil {
 				logger.Error("Failed to encode response: %v", err)
