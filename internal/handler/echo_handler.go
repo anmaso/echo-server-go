@@ -3,7 +3,6 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -99,7 +98,6 @@ func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, dat
 			w.WriteHeader(proxyResp.StatusCode)
 		*/
 		body, err := io.ReadAll(proxyResp.Body)
-		fmt.Println("%v", body)
 		if err != nil {
 			logger.Error("Failed to read proxy response body: %v", err)
 		} else {
