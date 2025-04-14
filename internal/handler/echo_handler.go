@@ -44,7 +44,6 @@ func (h *EchoHandler) processResponseBody(body string, data *model.RequestData) 
 		body = buf.String()
 	}
 
-	// Try to parse as JSON
 	return body, nil
 }
 
@@ -140,34 +139,20 @@ func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, dat
 		w.Header().Set("Content-Type", "application/json")
 	}
 
-	// Process response body
-	var responseBody string
-	if responseConfig.Body != "" {
-		var err error
-		responseBody, err = h.processResponseBody(responseConfig.Body, data)
-		logger.Debug("Processed response body: %v", responseBody)
-		if err != nil {
-			logger.Error("Failed to process response body: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
+	w.WriteHeader(responseConfig.StatusCode)
+
+	responseBody, err := h.processResponseBody(responseConfig.Body, data)
+	logger.Debug("Processed response body: %v", responseBody)
+	if err != nil {
+		logger.Error("Failed to process response body: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
-	/*
-		response := struct {
-			Request  *model.RequestData `json:"request,omitempty"`
-			Response interface{}        `json:"response"`
-			Status   int                `json:"status"`
-		}{
-			Response: responseBody,
-			Status:   responseConfig.StatusCode,
-		}
-
-		// Include request data only if specified
-		if responseConfig.IncludeRequest {
-			response.Request = data
-		}
-	*/
+	if responseBody != "" && !responseConfig.IncludeRequest {
+		w.Write([]byte(responseBody))
+		return
+	}
 
 	response := &model.ResponseData{
 		StatusCode: responseConfig.StatusCode,
@@ -176,25 +161,10 @@ func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, dat
 		Request:    data,
 		Counter:    model.CounterInfo{Global: c.GetCount(), Path: c.GetPathCount(r.URL.Path)},
 	}
-
-	// Set status code and write response
-	w.WriteHeader(responseConfig.StatusCode)
-	if responseBody != "" {
-		if !responseConfig.IncludeRequest {
-			w.Write([]byte(responseBody))
-		} else {
-			if err := json.NewEncoder(w).Encode(responseBody); err != nil {
-				logger.Error("Failed to encode response: %v", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return
-			}
-		}
-	} else {
-		if err := json.NewEncoder(w).Encode(response); err != nil {
-			logger.Error("Failed to encode response: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		logger.Error("Failed to encode response: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 }
 

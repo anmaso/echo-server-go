@@ -66,6 +66,7 @@ func (h *ConfigurationHandler) handlePost(w http.ResponseWriter, r *http.Request
 	}
 
 	w.WriteHeader(http.StatusCreated)
+	h.handleGet(w, r, pathCfg.Name)
 }
 
 func (h *ConfigurationHandler) handlePut(w http.ResponseWriter, r *http.Request, name string) {

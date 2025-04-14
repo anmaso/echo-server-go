@@ -17,17 +17,24 @@ type ProxyConfig struct {
 	ForwardHeaders []string `json:"forwardHeaders,omitempty"`
 }
 
+// RateLimitConfig defines rate limiting settings for a path
+type RateLimitConfig struct {
+	Requests int      `json:"requests"` // Number of requests allowed
+	Window   Duration `json:"window"`   // Time window for rate limiting
+}
+
 // PathConfig represents configuration for a specific path pattern
 type PathConfig struct {
-	Name           string          `json:"name"`
-	Pattern        string          `json:"pattern"`
-	Methods        []string        `json:"methods"`
-	Response       ResponseConfig  `json:"response"`
-	ErrorResponse  *ResponseConfig `json:"errorResponse,omitempty"`
-	ErrorEvery     int             `json:"errorEvery"`
-	CounterEnabled bool            `json:"counterEnabled"`
+	Name           string           `json:"name"`
+	Pattern        string           `json:"pattern"`
+	Methods        []string         `json:"methods"`
+	Response       ResponseConfig   `json:"response"`
+	ErrorResponse  *ResponseConfig  `json:"errorResponse,omitempty"`
+	ErrorEvery     int              `json:"errorEvery"`
+	CounterEnabled bool             `json:"counterEnabled"`
+	RateLimit      *RateLimitConfig `json:"rateLimit,omitempty"`
 	regex          *regexp.Regexp
-	Proxy          *ProxyConfig `json:"proxy,omitempty"` // Add this field
+	Proxy          *ProxyConfig `json:"proxy,omitempty"`
 }
 
 // ResponseConfig defines the response behavior

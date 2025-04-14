@@ -1,0 +1,14 @@
+{
+    "name": "rate-limited-api",
+    "pattern": "^/limited/.*$",
+    "methods": ["GET", "POST"],
+    "response": {
+        "statusCode": 200,
+        "body": "{\"message\": \"Rate limited endpoint\"}",
+        "includeRequest": true
+    },
+    "rateLimit": {
+        "requests": 5,
+        "window": "1m"
+    }
+}

@@ -2,7 +2,10 @@
     "name": "custom-text",
     "pattern": "^/custom$",
     "response": {
+        "headers": {
+            "Content-Type": "text/plain"
+        },
         "body": "template:text:{{.Method}} {{.Path}}",
-        "includeRequest": true
+        "includeRequest": false
     }
 }

@@ -81,5 +81,6 @@ func (cm *ConfigManager) UpdateConfig(cfg *ServerConfig) {
 func (cm *ConfigManager) UpdatePathConfig(cfg PathConfig) error {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
+	cm.config.PathMatcher.DeleteByName(cfg.Name)
 	return cm.config.PathMatcher.Add(&cfg)
 }
