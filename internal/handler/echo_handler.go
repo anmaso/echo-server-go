@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"text/template"
@@ -46,7 +47,7 @@ func (h *EchoHandler) processResponseBody(body string, data *model.RequestData) 
 	return body, nil
 }
 
-func (h *EchoHandler) shouldReturnError(pathConfig *config.PathConfig, count uint64) bool {
+func (h *EchoHandler) shouldReturnErrorEvery(pathConfig *config.PathConfig, count uint64) bool {
 	if pathConfig == nil || pathConfig.ErrorResponse == nil {
 		return false
 	}
@@ -62,14 +63,32 @@ func (h *EchoHandler) shouldReturnError(pathConfig *config.PathConfig, count uin
 }
 
 func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, data *model.RequestData) {
-	// Get counter instance
-	c := counter.GetGlobalCounter()
 
 	// Look up path configuration
 	pathConfig, matched := h.config.PathMatcher.Match(r.URL.Path, r.Method)
 	var responseConfig config.ResponseConfig
 
-	if matched && pathConfig.Proxy != nil {
+	// Get current path count
+	c := counter.GetGlobalCounter()
+	pathCount := c.GetPathCount(r.URL.Path)
+	shouldError := matched && h.shouldReturnErrorEvery(pathConfig, pathCount)
+
+	if shouldError {
+		responseConfig = *pathConfig.ErrorResponse
+	} else if matched {
+		responseConfig = pathConfig.Response
+	} else {
+		responseConfig = h.config.DefaultResponse
+	}
+	if responseConfig.StatusCode == 0 {
+		responseConfig.StatusCode = http.StatusOK
+	}
+
+	responseBody := responseConfig.Body
+
+	proxyEnabled := os.Getenv("ENABLE_PROXY") == "true"
+
+	if matched && pathConfig.Proxy != nil && proxyEnabled {
 		// create an http requet to forward to the proxy
 		proxyReq, err := http.NewRequest(r.Method, pathConfig.Proxy.URL, r.Body)
 		if err != nil {
@@ -101,26 +120,10 @@ func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, dat
 		if err != nil {
 			logger.Error("Failed to read proxy response body: %v", err)
 		} else {
-			data.Body = string(body)
-			logger.Debug("Received proxy response: %s", data.Body)
+			responseBody = string(body)
+			logger.Debug("Received proxy response len: %s", len(data.Body))
 
 		}
-	}
-
-	// Get current path count
-	pathCount := c.GetPathCount(r.URL.Path)
-
-	shouldError := matched && h.shouldReturnError(pathConfig, pathCount)
-
-	if shouldError {
-		responseConfig = *pathConfig.ErrorResponse
-	} else if matched {
-		responseConfig = pathConfig.Response
-	} else {
-		responseConfig = h.config.DefaultResponse
-	}
-	if responseConfig.StatusCode == 0 {
-		responseConfig.StatusCode = http.StatusOK
 	}
 
 	// Apply configured delay if any
@@ -139,7 +142,7 @@ func (h *EchoHandler) handleResponse(w http.ResponseWriter, r *http.Request, dat
 
 	w.WriteHeader(responseConfig.StatusCode)
 
-	responseBody, err := h.processResponseBody(responseConfig.Body, data)
+	responseBody, err := h.processResponseBody(responseBody, data)
 	logger.Debug("Processed response body: %v", responseBody)
 	if err != nil {
 		logger.Error("Failed to process response body: %v", err)

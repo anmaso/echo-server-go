@@ -1,13 +1,27 @@
 {
     "name": "proxy-example",
     "pattern": "^/proxy",
-    "methods": ["GET", "POST"],
+    "methods": [
+        "GET",
+        "POST"
+    ],
+    "response": {
+        "headers": {
+            "Content-Type": "text/html"
+        }
+    },
     "proxy": {
+        "includeRequest": false,
         "url": "https://www.google.com/",
         "timeout": "30s",
         "stripPrefix": true,
         "preserveHost": false,
-        "allowedHeaders": ["Authorization", "Content-Type"],
-        "forwardHeaders": ["X-Request-ID"]
+        "allowedHeaders": [
+            "Authorization",
+            "Content-Type"
+        ],
+        "forwardHeaders": [
+            "X-Request-ID"
+        ]
     }
 }

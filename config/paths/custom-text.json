@@ -1,6 +1,6 @@
 {
     "name": "custom-text",
-    "pattern": "^/custom$",
+    "pattern": "^/custom-text$",
     "response": {
         "headers": {
             "Content-Type": "text/plain"

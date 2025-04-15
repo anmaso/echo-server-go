@@ -97,7 +97,8 @@ func TestEndpoints(t *testing.T) {
 				"headers": map[string]string{
 					"Content-Type": "application/json",
 				},
-				"body": `{"message":"API endpoint"}`,
+				"includeRequest": false,
+				"body":           `{"message":"API endpoint"}`,
 			},
 		},
 		{
@@ -109,7 +110,8 @@ func TestEndpoints(t *testing.T) {
 				"headers": map[string]string{
 					"Content-Type": "application/json",
 				},
-				"body": `{"status":"created"}`,
+				"includeRequest": false,
+				"body":           `{"status":"created"}`,
 			},
 		},
 		{
