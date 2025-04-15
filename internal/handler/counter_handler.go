@@ -14,7 +14,13 @@ type CounterResponse struct {
 	PathCounts  map[string]uint64 `json:"pathCounts,omitempty"`
 }
 
-func CounterHandler(w http.ResponseWriter, r *http.Request) {
+type CounterHandler struct{}
+
+func NewCounterHandler() *CounterHandler {
+	return &CounterHandler{}
+}
+
+func (h *CounterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := counter.GetGlobalCounter()
 
 	switch r.Method {

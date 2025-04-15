@@ -36,40 +36,42 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
-func RequestLogging(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		rw := newResponseWriter(w)
+func RequestLoggingHandler() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			rw := newResponseWriter(w)
 
-		// Get counter instance
-		c := counter.GetGlobalCounter()
+			// Get counter instance
+			c := counter.GetGlobalCounter()
 
-		// Increment both global and path-specific counters
-		globalCount := c.Increment()
-		pathCount := c.IncrementPath(r.URL.Path)
+			// Increment both global and path-specific counters
+			globalCount := c.Increment()
+			pathCount := c.IncrementPath(r.URL.Path)
 
-		// Log request details with counter information
-		logger.Info("Request #%d (path #%d) started: %s %s %s",
-			globalCount,
-			pathCount,
-			r.RemoteAddr,
-			r.Method,
-			r.URL.Path,
-		)
+			// Log request details with counter information
+			logger.Info("Request #%d (path #%d) started: %s %s %s",
+				globalCount,
+				pathCount,
+				r.RemoteAddr,
+				r.Method,
+				r.URL.Path,
+			)
 
-		// Process request
-		next.ServeHTTP(rw, r)
+			// Process request
+			next.ServeHTTP(rw, r)
 
-		// Log completion
-		duration := time.Since(start)
-		logger.Info("Request #%d completed: %s %s %s status=%d size=%d duration=%v",
-			globalCount,
-			r.RemoteAddr,
-			r.Method,
-			r.URL.Path,
-			rw.status,
-			rw.size,
-			duration,
-		)
-	})
+			// Log completion
+			duration := time.Since(start)
+			logger.Info("Request #%d completed: %s %s %s status=%d size=%d duration=%v",
+				globalCount,
+				r.RemoteAddr,
+				r.Method,
+				r.URL.Path,
+				rw.status,
+				rw.size,
+				duration,
+			)
+		})
+	}
 }

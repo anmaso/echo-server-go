@@ -31,22 +31,20 @@ func New(configManager *config.ConfigManager) *Server {
 func setupRoutes(configManager *config.ConfigManager) http.Handler {
 	routes := mux.NewRouter()
 
-	// Add rate limiting middleware that will be applied to all routes
-	rateLimitMiddleware := middleware.RateLimit(configManager.GetConfig().PathMatcher)
+	rateLimit := middleware.RateLimit(configManager.GetConfig().PathMatcher)
+	logging := middleware.RequestLoggingHandler()
 
-	// Configuration endpoints
 	configHandler := handler.NewConfigurationHandler(configManager)
-	routes.PathPrefix("/config").Handler(middleware.RequestLogging(rateLimitMiddleware(configHandler)))
+	routes.PathPrefix("/config").Handler(logging(rateLimit(configHandler)))
 
-	// Counter endpoint with logging middleware
-	routes.Handle("/counter", middleware.RequestLogging(rateLimitMiddleware(http.HandlerFunc(handler.CounterHandler))))
+	routes.Handle("/counter", logging(rateLimit(handler.NewCounterHandler())))
 
-	// Main echo handler with logging middleware for all other paths
 	uiHandler := handler.NewUIHandler(configManager)
-	routes.Handle("/ui/", middleware.RequestLogging(rateLimitMiddleware(uiHandler)))
-	routes.PathPrefix("/ui/").Handler(middleware.RequestLogging(rateLimitMiddleware(uiHandler)))
+	routes.Handle("/ui/", logging(rateLimit(uiHandler)))
+	routes.PathPrefix("/ui/").Handler(logging(rateLimit(uiHandler)))
 	routes.Handle("/ui", http.RedirectHandler("/ui/", http.StatusPermanentRedirect))
-	routes.PathPrefix("/").Handler(middleware.RequestLogging(rateLimitMiddleware(handler.NewEchoHandler(configManager.GetConfig()))))
+
+	routes.PathPrefix("/").Handler(logging(rateLimit(handler.NewEchoHandler(configManager.GetConfig()))))
 
 	return routes
 }
