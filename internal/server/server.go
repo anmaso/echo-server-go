@@ -35,14 +35,14 @@ func setupRoutes(configManager *config.ConfigManager) http.Handler {
 	logging := middleware.RequestLoggingHandler()
 
 	configHandler := handler.NewConfigurationHandler(configManager)
-	routes.PathPrefix("/config").Handler(logging(rateLimit(configHandler)))
+	routes.PathPrefix("/config").Handler(logging(configHandler))
 
-	routes.Handle("/counter", logging(rateLimit(handler.NewCounterHandler())))
+	routes.Handle("/counter", logging(handler.NewCounterHandler()))
 
 	uiHandler := handler.NewUIHandler(configManager)
-	routes.Handle("/ui/", logging(rateLimit(uiHandler)))
-	routes.PathPrefix("/ui/").Handler(logging(rateLimit(uiHandler)))
-	routes.Handle("/ui", http.RedirectHandler("/ui/", http.StatusPermanentRedirect))
+	routes.Handle("/ui/", logging(uiHandler))
+	routes.PathPrefix("/ui/").Handler(logging(uiHandler))
+	routes.Handle("/", http.RedirectHandler("/ui/ui.html", http.StatusPermanentRedirect))
 
 	routes.PathPrefix("/").Handler(logging(rateLimit(handler.NewEchoHandler(configManager.GetConfig()))))
 
