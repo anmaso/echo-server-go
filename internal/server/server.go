@@ -12,6 +12,7 @@ import (
 	"echo-server/pkg/logger"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Server struct {
@@ -44,7 +45,9 @@ func setupRoutes(configManager *config.ConfigManager) http.Handler {
 	routes.PathPrefix("/ui/").Handler(logging(uiHandler))
 	routes.Handle("/", http.RedirectHandler("/ui/ui.html", http.StatusPermanentRedirect))
 
-	routes.PathPrefix("/").Handler(logging(rateLimit(handler.NewEchoHandler(configManager.GetConfig()))))
+	routes.Handle("/metrics", promhttp.Handler())
+
+	routes.PathPrefix("/").Handler(logging(rateLimit(middleware.MetricsMiddleware(handler.NewEchoHandler(configManager.GetConfig())))))
 
 	return routes
 }

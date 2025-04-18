@@ -9,5 +9,6 @@
     "errorResponse": {
         "statusCode": 500,
         "body": "{\"error\":\"test error\"}"
-    }
+    },
+    "errorEvery": 1
 }

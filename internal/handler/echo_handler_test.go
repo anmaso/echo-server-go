@@ -357,7 +357,7 @@ func TestErrorResponse(t *testing.T) {
 			req := httptest.NewRequest("GET", tt.path, nil)
 			w := httptest.NewRecorder()
 
-			middleware.RequestLogging(handler).ServeHTTP(w, req)
+			middleware.RequestLoggingHandler()(handler).ServeHTTP(w, req)
 			if w.Code != tt.wantStatus {
 				t.Errorf("Status code = %d, want %d", w.Code, tt.wantStatus)
 			}
@@ -367,20 +367,6 @@ func TestErrorResponse(t *testing.T) {
 					t.Errorf("Response body = %q, want %q", body, tt.wantErrorStr)
 				}
 			}
-			/*
-
-
-				var response struct {
-					Error bool `json:"error"`
-				}
-				if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
-					t.Fatalf("Failed to decode response: %v", err)
-				}
-
-				if response.Error != tt.wantError {
-					t.Errorf("Error = %v, want %v", response.Error, tt.wantError)
-				}
-			*/
 		})
 	}
 }
@@ -427,9 +413,7 @@ func TestErrorEvery(t *testing.T) {
 			req := httptest.NewRequest("GET", "/error-every", nil)
 			w := httptest.NewRecorder()
 
-			middleware.RequestLogging(handler).ServeHTTP(w, req)
-
-			//handler.ServeHTTP(w, req)
+			middleware.RequestLoggingHandler()(handler).ServeHTTP(w, req)
 
 			status := w.Result().StatusCode
 
