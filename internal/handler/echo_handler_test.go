@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -278,26 +280,6 @@ func TestCustomResponseBody(t *testing.T) {
 			if body != tt.want {
 				t.Errorf("Response body = %q, want %q", body, tt.want)
 			}
-			/*
-				fmt.Printf("== %v %T\n", w.Body.String(), w.Body)
-
-				var got map[string]interface{}
-				if err := json.NewDecoder(w.Body).Decode(&got); err != nil {
-					t.Fatalf("Failed to decode response: %v", err)
-				}
-
-				var want map[string]interface{}
-				if err := json.Unmarshal([]byte(tt.want), &want); err != nil {
-					t.Fatalf("Failed to parse expected response: %v", err)
-				}
-
-				responseBody := got["response"].(map[string]interface{})
-				for k, v := range want {
-					if responseBody[k] != v {
-						t.Errorf("Response[%q] = %v, want %v", k, responseBody[k], v)
-					}
-				}
-			*/
 		})
 	}
 }
@@ -419,6 +401,293 @@ func TestErrorEvery(t *testing.T) {
 
 			if tt.wantError && status != http.StatusInternalServerError {
 				t.Errorf("Error = %v, want %v", status, tt.wantError)
+			}
+		})
+	}
+}
+
+func TestTemplateProcessing(t *testing.T) {
+	tests := []struct {
+		name       string
+		pathConfig config.PathConfig
+		path       string
+		method     string
+		body       string
+		headers    map[string]string
+		want       string
+	}{
+		{
+			name: "template with request data",
+			pathConfig: config.PathConfig{
+				Pattern: "^/template-test$",
+				Methods: []string{"POST"},
+				Response: config.ResponseConfig{
+					Body: `template:{"method":"{{.Method}}","path":"{{.Path}}","headers":{"X-Test":"{{index .Headers "X-Test"}}"}}`,
+				},
+			},
+			path:    "/template-test",
+			method:  "POST",
+			body:    "test body",
+			headers: map[string]string{"X-Test": "test-value"},
+			want:    `{"method":"POST","path":"/template-test","headers":{"X-Test":"test-value"}}`,
+		},
+		{
+			name: "invalid template",
+			pathConfig: config.PathConfig{
+				Pattern: "^/invalid-template$",
+				Methods: []string{"GET"},
+				Response: config.ResponseConfig{
+					Body: `template:{{.InvalidField}}`,
+				},
+			},
+			path:   "/invalid-template",
+			method: "GET",
+			want:   "Internal Server Error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &config.ServerConfig{
+				PathMatcher: config.NewPathMatcher(),
+			}
+
+			if err := cfg.PathMatcher.Add(&tt.pathConfig); err != nil {
+				t.Fatalf("Failed to add path config: %v", err)
+			}
+
+			handler := NewEchoHandler(cfg)
+			req := httptest.NewRequest(tt.method, tt.path, strings.NewReader(tt.body))
+			for k, v := range tt.headers {
+				req.Header.Set(k, v)
+			}
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+
+			if tt.name == "invalid template" {
+				if w.Code != http.StatusInternalServerError {
+					t.Errorf("Expected status code %d, got %d", http.StatusInternalServerError, w.Code)
+				}
+			} else {
+				body := strings.TrimSpace(w.Body.String())
+				if body != tt.want {
+					t.Errorf("Response body = %q, want %q", body, tt.want)
+				}
+			}
+		})
+	}
+}
+
+func TestIncludeRequest(t *testing.T) {
+	tests := []struct {
+		name                  string
+		pathConfig            config.PathConfig
+		path                  string
+		method                string
+		requestBody           string
+		includeRequest        bool
+		wantRequestInResponse bool
+	}{
+		{
+			name: "include request enabled",
+			pathConfig: config.PathConfig{
+				Pattern: "^/include-request$",
+				Methods: []string{"POST"},
+				Response: config.ResponseConfig{
+					Body:           `{"message":"test"}`,
+					IncludeRequest: true,
+				},
+			},
+			path:                  "/include-request",
+			method:                "POST",
+			requestBody:           `{"test":"data"}`,
+			includeRequest:        true,
+			wantRequestInResponse: true,
+		},
+		{
+			name: "include request disabled",
+			pathConfig: config.PathConfig{
+				Pattern: "^/no-request$",
+				Methods: []string{"POST"},
+				Response: config.ResponseConfig{
+					Body:           `{"message":"test"}`,
+					IncludeRequest: false,
+				},
+			},
+			path:                  "/no-request",
+			method:                "POST",
+			requestBody:           `{"test":"data"}`,
+			includeRequest:        false,
+			wantRequestInResponse: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &config.ServerConfig{
+				PathMatcher: config.NewPathMatcher(),
+			}
+
+			if err := cfg.PathMatcher.Add(&tt.pathConfig); err != nil {
+				t.Fatalf("Failed to add path config: %v", err)
+			}
+
+			handler := NewEchoHandler(cfg)
+			req := httptest.NewRequest(tt.method, tt.path, strings.NewReader(tt.requestBody))
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+
+			var response map[string]interface{}
+			if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
+				t.Fatalf("Failed to decode response: %v", err)
+			}
+
+			_, hasRequest := response["request"]
+			if hasRequest != tt.wantRequestInResponse {
+				t.Errorf("Response has request = %v, want %v", hasRequest, tt.wantRequestInResponse)
+			}
+		})
+	}
+}
+
+func TestProxyFunctionality(t *testing.T) {
+	oldEnv := os.Getenv("ENABLE_PROXY")
+	defer os.Setenv("ENABLE_PROXY", oldEnv)
+	os.Setenv("ENABLE_PROXY", "true")
+
+	tests := []struct {
+		name       string
+		pathConfig config.PathConfig
+		path       string
+		method     string
+		wantStatus int
+	}{
+		{
+			name: "proxy enabled with valid URL",
+			pathConfig: config.PathConfig{
+				Pattern: "^/proxy$",
+				Methods: []string{"GET"},
+				Proxy: &config.ProxyConfig{
+					URL: "http://localhost:8081/test",
+				},
+			},
+			path:       "/proxy",
+			method:     "GET",
+			wantStatus: http.StatusOK,
+		},
+		{
+			name: "proxy with invalid URL",
+			pathConfig: config.PathConfig{
+				Pattern: "^/invalid-proxy$",
+				Methods: []string{"GET"},
+				Proxy: &config.ProxyConfig{
+					URL: "http://invalid-host:9999/test",
+				},
+			},
+			path:       "/invalid-proxy",
+			method:     "GET",
+			wantStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &config.ServerConfig{
+				PathMatcher: config.NewPathMatcher(),
+			}
+
+			if err := cfg.PathMatcher.Add(&tt.pathConfig); err != nil {
+				t.Fatalf("Failed to add path config: %v", err)
+			}
+
+			handler := NewEchoHandler(cfg)
+			req := httptest.NewRequest(tt.method, tt.path, nil)
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+
+			if w.Code != tt.wantStatus {
+				t.Errorf("Status code = %d, want %d", w.Code, tt.wantStatus)
+			}
+		})
+	}
+}
+
+func TestContentTypeHeaders(t *testing.T) {
+	tests := []struct {
+		name            string
+		pathConfig      config.PathConfig
+		path            string
+		method          string
+		wantContentType string
+	}{
+		{
+			name: "explicit JSON content type",
+			pathConfig: config.PathConfig{
+				Pattern: "^/json$",
+				Methods: []string{"GET"},
+				Response: config.ResponseConfig{
+					Headers: map[string]string{
+						"Content-Type": "application/json",
+					},
+					Body: `{"message":"test"}`,
+				},
+			},
+			path:            "/json",
+			method:          "GET",
+			wantContentType: "application/json",
+		},
+		{
+			name: "explicit text content type",
+			pathConfig: config.PathConfig{
+				Pattern: "^/text$",
+				Methods: []string{"GET"},
+				Response: config.ResponseConfig{
+					Headers: map[string]string{
+						"Content-Type": "text/plain",
+					},
+					Body: "Hello, world!",
+				},
+			},
+			path:            "/text",
+			method:          "GET",
+			wantContentType: "text/plain",
+		},
+		{
+			name: "default content type",
+			pathConfig: config.PathConfig{
+				Pattern: "^/default$",
+				Methods: []string{"GET"},
+				Response: config.ResponseConfig{
+					Body: `{"message":"test"}`,
+				},
+			},
+			path:            "/default",
+			method:          "GET",
+			wantContentType: "application/json",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &config.ServerConfig{
+				PathMatcher: config.NewPathMatcher(),
+			}
+
+			if err := cfg.PathMatcher.Add(&tt.pathConfig); err != nil {
+				t.Fatalf("Failed to add path config: %v", err)
+			}
+
+			handler := NewEchoHandler(cfg)
+			req := httptest.NewRequest(tt.method, tt.path, nil)
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+
+			if contentType := w.Header().Get("Content-Type"); contentType != tt.wantContentType {
+				t.Errorf("Content-Type = %q, want %q", contentType, tt.wantContentType)
 			}
 		})
 	}
