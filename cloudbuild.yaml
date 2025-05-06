@@ -1,5 +1,5 @@
 steps:
-  - name: build
+  - name: gcr.io/cloud-builders/docker
     script: |
       docker build -t europe-southwest1-docker.pkg.dev/demouv2/uv/echo:$COMMIT_SHA .
 images:
