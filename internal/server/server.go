@@ -43,7 +43,7 @@ func setupRoutes(configManager *config.ConfigManager) http.Handler {
 	uiHandler := handler.NewUIHandler(configManager)
 	routes.Handle("/ui/", logging(uiHandler))
 	routes.PathPrefix("/ui/").Handler(logging(uiHandler))
-	routes.Handle("/", http.RedirectHandler("/ui/ui.html", http.StatusPermanentRedirect))
+	routes.Handle("/ui", http.RedirectHandler("/ui/ui.html", http.StatusPermanentRedirect))
 
 	routes.Handle("/metrics", promhttp.Handler())
 
