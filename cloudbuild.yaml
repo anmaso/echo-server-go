@@ -1,0 +1,8 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    script: |
+      docker build -t europe-southwest1-docker.pkg.dev/demouv2/uv/echo .
+images:
+  - europe-southwest1-docker.pkg.dev/demouv2/uv/echo
+options:
+  logging: CLOUD_LOGGING_ONLY
