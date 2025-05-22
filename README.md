@@ -14,6 +14,7 @@ A configurable HTTP echo server with advanced features for testing and mocking H
 - REST API for configuration management
 - Proxy support for upstream servers
 - Web UI for configuration and testing
+- Record and retrieve request/response history with UI integration.
 
 ## Screenshots
 

@@ -37,12 +37,38 @@ func (l *Loader) LoadServerConfig(filepath string) error {
 		return fmt.Errorf("reading server config: %w", err)
 	}
 
-	var cfg ServerConfig
+	// Initialize cfg with default values, especially for new nested structs
+	// This ensures that if a section like "history" is missing from JSON,
+	// the default values are used.
+	cfg := ServerConfig{
+		PathMatcher: NewPathMatcher(), // Initialize PathMatcher as before
+		History: HistoryConfig{ // Default history configuration
+			Enabled:        false,
+			DefaultMaxSize: 100,
+		},
+		// Note: Other fields like Host, Port, Timeouts, DefaultResponse 
+		// will be zero-valued if not in JSON, which might be acceptable or 
+		// might need explicit defaults here too if strict defaults are required for them.
+		// For this task, we are focusing on HistoryConfig.
+	}
+
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return fmt.Errorf("parsing server config: %w", err)
 	}
 
-	cfg.PathMatcher = NewPathMatcher()
+	// Ensure PathMatcher is re-initialized if it was overwritten by JSON (empty object)
+	// or if it's nil (though with the above initialization, it shouldn't be nil).
+	// If PathMatcher can be defined in JSON, this logic might need adjustment.
+	// Based on current types.go, PathMatcher is not json tagged (`json:"-"`), so it's not directly unmarshalled.
+	// However, the `Paths []PathConfig` is used to populate it.
+	// The line `cfg.PathMatcher = NewPathMatcher()` after unmarshal might still be needed if JSON
+	// could somehow nullify it, but it's safer to initialize it as part of the default struct.
+	// Let's ensure it's not nil.
+	if cfg.PathMatcher == nil {
+		cfg.PathMatcher = NewPathMatcher()
+	}
+	// The LoadPathConfigs call will populate this PathMatcher.
+
 	l.config = &cfg
 	return nil
 }

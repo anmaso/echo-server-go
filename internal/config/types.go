@@ -46,4 +46,11 @@ type ServerConfig struct {
 	DefaultResponse ResponseConfig `json:"defaultResponse"`
 	PathMatcher     PathMatcher    `json:"pathMatcher"`
 	Paths           []PathConfig   `json:"paths"`
+	History         HistoryConfig  `json:"history"` // New field
+}
+
+// HistoryConfig defines configuration for the request history feature.
+type HistoryConfig struct {
+	Enabled         bool `json:"enabled"`
+	DefaultMaxSize  int  `json:"defaultMaxSize"` // Renamed from MaxSize in example to DefaultMaxSize
 }
