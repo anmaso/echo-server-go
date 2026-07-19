@@ -13,6 +13,7 @@
                 <li><a href="#" data-tab="configs">Path Configs</a></li>
                 <li><a href="#" data-tab="tester">Request Tester</a></li>
                 <li><a href="#" data-tab="counters">Counters</a></li>
+                <li><a href="#" data-tab="log">Log</a></li>
                 <li><a href="#" data-tab="help">Help</a></li>
             </ul>
         </nav>
@@ -20,47 +21,106 @@
         <div id="configs" class="tab-content">
             <h2>Path Configurations</h2>
             <div class="config-controls">
-                <button id="addConfig">Add Configuration</button>
-                <button id="toggleAll">Expand All</button>
-                <input type="text" id="configFilter" placeholder="Filter configurations..." class="filter-input">
+<input type="text" id="configFilter" placeholder="Filter configurations..." class="filter-input">
             </div>
-            <div id="configList"></div>
+            <div class="configs-layout">
+                <div id="configList" class="config-list-pane"></div>
+                <div id="configDetail" class="config-detail-pane hidden">
+                    <div class="detail-header">
+                        <span id="detailName" class="detail-title"></span>
+                        <div class="detail-actions">
+                            <button id="detailTest">Test</button>
+                            <button id="detailEdit">Edit</button>
+                            <button id="detailDelete" class="btn-danger">Delete</button>
+                            <button id="closeDetail" class="btn-icon">✕</button>
+                        </div>
+                    </div>
+                    <pre id="detailBody" class="detail-pre"></pre>
+                </div>
+            </div>
         </div>
 
         <div id="tester" class="tab-content active">
             <h2>Request Tester</h2>
-            <div class="request-form">
-                <label for="sampleRequests">Sample Requests:</label>
-                <select id="sampleRequests" onchange="loadSampleRequest()">
-                    <option value="">Select a sample request...</option>
-                    <option value="configGet">Get All Configurations</option>
-                    <option value="configPostSimple">Add Simple Configuration</option>
-                    <option value="configPostDelay">Add Configuration with Delay</option>
-                    <option value="configPostTemplate">Add Configuration with Template</option>
-                    <option value="configPostError">Add Configuration with Error Response</option>
-                    <option value="regularGet">Simple GET Request</option>
-                    <option value="regularPost">Simple POST Request</option>
-                </select>
+            <div class="tester-panels">
 
-                <label for="method">Method:</label>
-                <select id="method">
-                    <option>GET</option>
-                    <option>POST</option>
-                    <option>PUT</option>
-                    <option>DELETE</option>
-                </select>
+                <!-- Left panel: samples + controls -->
+                <div class="panel panel-left">
+                    <span class="panel-label">Sample Requests</span>
+                    <ul id="sampleRequestList" class="sample-list">
+                        <li data-key="configGet">Get All Configurations</li>
+                        <li data-key="configPostSimple">Add Simple Config</li>
+                        <li data-key="configPostDelay">Add Config with Delay</li>
+                        <li data-key="configPostTemplate">Add Config with Template</li>
+                        <li data-key="configPostError">Add Config with Error</li>
+                        <li data-key="regularGet">Simple GET Request</li>
+                        <li data-key="regularPost">Simple POST Request</li>
+                    </ul>
 
-                <label for="path">Path:</label>
-                <input type="text" id="path" value="/" placeholder="Path (e.g. /api/test)">
+                    <div class="left-controls">
+                        <span class="panel-label">Method</span>
+                        <div class="method-radios">
+                            <label><input type="radio" name="method" value="GET" checked> GET</label>
+                            <label><input type="radio" name="method" value="POST"> POST</label>
+                            <label><input type="radio" name="method" value="PUT"> PUT</label>
+                            <label><input type="radio" name="method" value="DELETE"> DELETE</label>
+                        </div>
 
-                <label for="requestBody">Request Body:</label>
-                <textarea id="requestBody" placeholder="Request Body (JSON)"></textarea>
-                
-                <button id="sendRequest">Send Request</button>
+                        <span class="panel-label" style="margin-top:12px">Path</span>
+                        <input type="text" id="path" value="/" placeholder="/api/test">
+
+                        <button id="sendRequest">Send Request</button>
+                    </div>
+                </div>
+
+                <!-- Middle panel: request body editor -->
+                <div class="panel panel-middle">
+                    <span class="panel-label">Request Body</span>
+                    <textarea id="requestBody" placeholder="Request body (JSON)" spellcheck="false"></textarea>
+                </div>
+
+                <!-- Right panel: response -->
+                <div class="panel panel-right">
+                    <span class="panel-label">Response</span>
+                    <pre id="response" class="response-pre"><span class="response-placeholder">Response will appear here...</span></pre>
+                </div>
+
             </div>
-            <div class="response-area">
-                <h3>Response</h3>
-                <pre id="response"></pre>
+        </div>
+
+        <div id="log" class="tab-content">
+            <h2>Request Log</h2>
+            <div class="log-toolbar">
+                <input type="text" id="logFilter" placeholder="Filter (regex)..." class="filter-input">
+                <button id="pauseLog">Pause</button>
+                <button id="clearLog">Clear</button>
+                <label class="buffer-label">Buffer:
+                    <input type="number" id="bufferSizeInput" min="1" max="10000" style="width:70px">
+                </label>
+                <button id="setBufferSize">Set</button>
+            </div>
+            <div class="log-layout">
+                <div class="log-list-pane">
+                    <table class="log-table">
+                        <thead>
+                            <tr>
+                                <th class="col-time">Time</th>
+                                <th class="col-method">Method</th>
+                                <th class="col-path">Path</th>
+                                <th class="col-status">Status</th>
+                                <th class="col-duration">Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTableBody"></tbody>
+                    </table>
+                </div>
+                <div id="logDetail" class="log-detail-pane hidden">
+                    <div class="detail-header">
+                        <span id="logDetailTitle" class="detail-title"></span>
+                        <button id="closeLogDetail" class="btn-icon">✕</button>
+                    </div>
+                    <div id="logDetailBody" class="log-detail-body"></div>
+                </div>
             </div>
         </div>
 
@@ -70,9 +130,10 @@
             <button id="resetCounters">Reset All</button>
             <div id="counterList"></div>
         </div>
+
         <div id="help" class="tab-content">
             <h2>Echo Server Help</h2>
-            
+
             <section class="help-section">
                 <h3>Path Configurations</h3>
                 <p>Configure custom endpoint behaviors with the following options:</p>
@@ -152,95 +213,6 @@
         </div>
     </div>
 
-    <script>
-        const sampleRequests = {
-            configGet: {
-                method: 'GET',
-                path: '/config/paths',
-                body: ''
-            },
-            configPostSimple: {
-                method: 'POST',
-                path: '/config/paths',
-                body: JSON.stringify({
-                    name: "simple-endpoint",
-                    pattern: "^/api/simple$",
-                    methods: ["GET"],
-                    response: {
-                        statusCode: 200,
-                        body: '{"message": "simple response"}'
-                    }
-                }, null, 2)
-            },
-            configPostDelay: {
-                method: 'POST',
-                path: '/config/paths',
-                body: JSON.stringify({
-                    name: "delayed-endpoint",
-                    pattern: "^/api/delayed$",
-                    methods: ["GET"],
-                    response: {
-                        statusCode: 200,
-                        body: '{"message": "delayed response"}',
-                        delay: "2s"
-                    }
-                }, null, 2)
-            },
-            configPostTemplate: {
-                method: 'POST',
-                path: '/config/paths',
-                body: JSON.stringify({
-                    pattern: "^/api/template/.*$",
-                    methods: ["GET", "POST"],
-                    response: {
-                        statusCode: 200,
-                        body: 'template:{"path":"{{.Path}}","method":"{{.Method}}","headers":{{.Headers}}}',
-                        includeRequest: true
-                    }
-                }, null, 2)
-            },
-            configPostError: {
-                method: 'POST',
-                path: '/config/paths',
-                body: JSON.stringify({
-                    pattern: "^/api/error$",
-                    methods: ["GET"],
-                    response: {
-                        statusCode: 200,
-                        body: '{"status":"ok"}'
-                    },
-                    errorResponse: {
-                        statusCode: 500,
-                        body: '{"error":"simulated error"}'
-                    },
-                    errorFrequency: 0.5
-                }, null, 2)
-            },
-            regularGet: {
-                method: 'GET',
-                path: '/api/simple',
-                body: ''
-            },
-            regularPost: {
-                method: 'POST',
-                path: '/api/template/test',
-                body: JSON.stringify({
-                    message: "Hello, world!",
-                    timestamp: new Date().toISOString()
-                }, null, 2)
-            }
-        };
-
-        function loadSampleRequest() {
-            const select = document.getElementById('sampleRequests');
-            const sample = sampleRequests[select.value];
-            if (sample) {
-                document.getElementById('method').value = sample.method;
-                document.getElementById('path').value = sample.path;
-                document.getElementById('requestBody').value = sample.body;
-            }
-        }
-    </script>
     <script src="/ui/ui.js"></script>
 </body>
 </html>

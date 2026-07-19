@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"echo-server/internal/config"
+	"echo-server/internal/requestlog"
 	"echo-server/internal/server"
 	"echo-server/pkg/logger"
 )
@@ -64,9 +65,12 @@ func getConfig() *config.ServerConfig {
 	configPath := flag.String("config", "config/server.json", "Path to server configuration file")
 	pathsDir := flag.String("paths-dir", "config/paths", "Path to directory containing path configurations")
 	logLevel := flag.String("log-level", "info", "Logging level (debug, info, warn, error)")
+	logBufferSize := flag.Int("log-buffer-size", 200, "Number of requests to keep in the request log buffer")
 	help := flag.Bool("help", false, "Show help message")
 
 	flag.Parse()
+
+	requestlog.InitGlobal(*logBufferSize)
 
 	if *help {
 		return nil

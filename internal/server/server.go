@@ -34,11 +34,19 @@ func setupRoutes(configManager *config.ConfigManager) http.Handler {
 
 	rateLimit := middleware.RateLimit(configManager.GetConfig().PathMatcher)
 	logging := middleware.RequestLoggingHandler()
+	capture := middleware.RequestCaptureMiddleware()
 
 	configHandler := handler.NewConfigurationHandler(configManager)
-	routes.PathPrefix("/config").Handler(logging(configHandler))
+	routes.PathPrefix("/config").Handler(logging(capture(configHandler)))
 
-	routes.Handle("/counter", logging(handler.NewCounterHandler()))
+	routes.Handle("/counter", logging(capture(handler.NewCounterHandler())))
+
+	// Request log endpoints (no capture — we don't log requests about the log).
+	logHandler := handler.NewLogHandler()
+	routes.HandleFunc("/ui/requests/stream", logHandler.HandleStream).Methods(http.MethodGet)
+	routes.HandleFunc("/ui/requests/config", logHandler.HandleConfig).Methods(http.MethodGet, http.MethodPut)
+	routes.HandleFunc("/ui/requests", logHandler.HandleList).Methods(http.MethodGet)
+	routes.HandleFunc("/ui/requests", logHandler.HandleClear).Methods(http.MethodDelete)
 
 	uiHandler := handler.NewUIHandler(configManager)
 	routes.Handle("/ui/", logging(uiHandler))
@@ -47,7 +55,7 @@ func setupRoutes(configManager *config.ConfigManager) http.Handler {
 
 	routes.Handle("/metrics", promhttp.Handler())
 
-	routes.PathPrefix("/").Handler(logging(rateLimit(middleware.MetricsMiddleware(handler.NewEchoHandler(configManager.GetConfig())))))
+	routes.PathPrefix("/").Handler(logging(capture(rateLimit(middleware.MetricsMiddleware(handler.NewEchoHandler(configManager.GetConfig()))))))
 
 	return routes
 }
