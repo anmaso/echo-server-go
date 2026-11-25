@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -120,6 +121,17 @@ func getConfig() *config.ServerConfig {
 	if *port != 0 {
 		cfg.Port = *port
 	}
+	// Use the PORT environment variable unless -port was given explicitly
+	if !isFlagSet("port") {
+		if envPort := os.Getenv("PORT"); envPort != "" {
+			p, err := strconv.Atoi(envPort)
+			if err != nil || p <= 0 || p > 65535 {
+				logger.Error("Invalid PORT environment variable %q", envPort)
+				os.Exit(1)
+			}
+			cfg.Port = p
+		}
+	}
 	if *readTimeout != 0 {
 		cfg.ReadTimeout.Duration = *readTimeout
 	}
@@ -135,6 +147,17 @@ func getConfig() *config.ServerConfig {
 	return cfg
 }
 
+// isFlagSet reports whether the named flag was passed on the command line.
+func isFlagSet(name string) bool {
+	set := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			set = true
+		}
+	})
+	return set
+}
+
 const helpText = `Echo Server - A configurable HTTP mock server
 
 Usage:
@@ -142,7 +165,7 @@ Usage:
 
 Options:
   -port int
-        Port to run the server on (default 8080)
+        Port to run the server on (default: $PORT if set, otherwise 8080)
   -config string
         Path to configuration directory (default "./config")
   -help
